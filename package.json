@@ -1,0 +1,31 @@
+{
+    "name": "create-wordpress",
+    "version": "1.0.0",
+    "description": "CLI tool to scaffold WordPress sites with Laravel Herd",
+    "type": "module",
+    "bin": {
+        "create-wordpress": "./bin/create-wordpress.js"
+    },
+    "engines": {
+        "node": ">=18.0.0"
+    },
+    "keywords": [
+        "wordpress",
+        "laravel-herd",
+        "cli",
+        "scaffold",
+        "wp-cli"
+    ],
+    "files": [
+        "bin/",
+        "src/"
+    ],
+    "dependencies": {
+        "adm-zip": "^0.5.16",
+        "axios": "^1.7.7",
+        "chalk": "^5.3.0",
+        "inquirer": "^9.3.7",
+        "mysql2": "^3.11.3",
+        "ora": "^8.1.1"
+    }
+}
