@@ -1,10 +1,23 @@
 import fs from 'fs';
 import inquirer from 'inquirer';
 import chalk from 'chalk';
-import { loadConfig } from './config.js';
 import { getConfigFilePath } from './utils/path.js';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
+
+/**
+ * Reads config.json without triggering the first-time setup wizard.
+ * Returns null if the file does not exist or is corrupted.
+ */
+function readConfigRaw() {
+  const configPath = getConfigFilePath();
+  if (!fs.existsSync(configPath)) return null;
+  try {
+    return JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+  } catch {
+    return null;
+  }
+}
 
 function saveConfig(config) {
   fs.writeFileSync(getConfigFilePath(), JSON.stringify(config, null, 2), 'utf-8');
@@ -101,18 +114,7 @@ async function editPackageServer(config) {
 }
 
 async function editThemes(config) {
-  const themes = config.themes || [];
-
-  console.log(chalk.bold.cyan('\n📋  Current themes:\n'));
-  if (themes.length === 0) {
-    console.log(chalk.gray('   (none)\n'));
-  } else {
-    themes.forEach((t, i) => {
-      const isDefault = t.slug === config.default_theme_slug;
-      console.log(`  ${chalk.gray(String(i + 1).padStart(2))}. ${t.name} ${chalk.gray(`(${t.slug})`)}${isDefault ? chalk.yellow(' ← default') : ''}`);
-    });
-    console.log();
-  }
+  // Bug 3 fix: always read from config.themes inside loop — no stale local alias
 
   const THEME_ACTIONS = [
     { name: '➕  Add a theme', value: 'add' },
@@ -122,6 +124,20 @@ async function editThemes(config) {
   ];
 
   while (true) {
+    // Re-read from config every iteration to stay fresh after mutations
+    const themes = config.themes || [];
+
+    console.log(chalk.bold.cyan('\n📋  Current themes:\n'));
+    if (themes.length === 0) {
+      console.log(chalk.gray('   (none)\n'));
+    } else {
+      themes.forEach((t, i) => {
+        const isDefault = t.slug === config.default_theme_slug;
+        console.log(`  ${chalk.gray(String(i + 1).padStart(2))}. ${t.name} ${chalk.gray(`(${t.slug})`)}${isDefault ? chalk.yellow(' ← default') : ''}`);
+      });
+      console.log();
+    }
+
     const { action } = await inquirer.prompt([{
       type: 'list',
       name: 'action',
@@ -137,6 +153,7 @@ async function editThemes(config) {
         { type: 'input', name: 'slug', message: 'Theme slug (package key):' },
       ]);
       if (name && slug) {
+        if (!config.themes) config.themes = [];
         config.themes.push({ name: name.trim(), slug: slug.trim() });
         console.log(chalk.green(`✔  Added: ${name}\n`));
       }
@@ -150,7 +167,9 @@ async function editThemes(config) {
         choices: themes.map((t) => ({ name: `${t.name} (${t.slug})`, value: t.slug })),
       }]);
       config.themes = config.themes.filter((t) => t.slug !== slugToRemove);
-      if (config.default_theme_slug === slugToRemove) config.default_theme_slug = config.themes[0]?.slug || '';
+      if (config.default_theme_slug === slugToRemove) {
+        config.default_theme_slug = config.themes[0]?.slug || '';
+      }
       console.log(chalk.green(`✔  Removed: ${slugToRemove}\n`));
     }
 
@@ -169,17 +188,7 @@ async function editThemes(config) {
 }
 
 async function editPlugins(config) {
-  const plugins = config.plugins || [];
-
-  console.log(chalk.bold.cyan('\n📋  Current plugins:\n'));
-  if (plugins.length === 0) {
-    console.log(chalk.gray('   (none)\n'));
-  } else {
-    plugins.forEach((p, i) => {
-      console.log(`  ${chalk.gray(String(i + 1).padStart(2))}. ${p.name} ${chalk.gray(`(${p.slug})`)}`);
-    });
-    console.log();
-  }
+  // Bug 3 fix: always read from config.plugins inside loop — no stale local alias
 
   const PLUGIN_ACTIONS = [
     { name: '➕  Add a plugin', value: 'add' },
@@ -188,6 +197,19 @@ async function editPlugins(config) {
   ];
 
   while (true) {
+    // Re-read from config every iteration to stay fresh after mutations
+    const plugins = config.plugins || [];
+
+    console.log(chalk.bold.cyan('\n📋  Current plugins:\n'));
+    if (plugins.length === 0) {
+      console.log(chalk.gray('   (none)\n'));
+    } else {
+      plugins.forEach((p, i) => {
+        console.log(`  ${chalk.gray(String(i + 1).padStart(2))}. ${p.name} ${chalk.gray(`(${p.slug})`)}`);
+      });
+      console.log();
+    }
+
     const { action } = await inquirer.prompt([{
       type: 'list',
       name: 'action',
@@ -203,6 +225,7 @@ async function editPlugins(config) {
         { type: 'input', name: 'slug', message: 'Plugin slug (package key):' },
       ]);
       if (name && slug) {
+        if (!config.plugins) config.plugins = [];
         config.plugins.push({ name: name.trim(), slug: slug.trim() });
         console.log(chalk.green(`✔  Added: ${name}\n`));
       }
@@ -239,13 +262,22 @@ const SETTINGS_SECTIONS = [
 /**
  * Interactive settings editor for config.json.
  * Called when user runs `create-wp --settings`
+ *
+ * Bug 2 fix: uses readConfigRaw() instead of loadConfig() to avoid triggering
+ * the first-time setup wizard (which would write config.json to disk immediately).
  */
 export async function editSettings() {
   console.log(chalk.bold.cyan('\n🛠️   Settings Editor\n'));
   console.log(chalk.gray(`   Config file: ${getConfigFilePath()}\n`));
 
-  // Load a deep copy so we can discard changes on exit
-  const config = await loadConfig();
+  // Bug 2 fix: raw read — no wizard, no side-effects on disk
+  const config = readConfigRaw();
+
+  if (!config) {
+    console.log(chalk.yellow('⚠  No config file found.'));
+    console.log(chalk.yellow('   Run `create-wp` first to complete the initial setup.\n'));
+    return;
+  }
 
   while (true) {
     const { section } = await inquirer.prompt([{
@@ -268,12 +300,12 @@ export async function editSettings() {
     }
 
     switch (section) {
-      case 'general':  await editGeneral(config);         break;
-      case 'database': await editDatabase(config);        break;
+      case 'general':  await editGeneral(config);          break;
+      case 'database': await editDatabase(config);         break;
       case 'wp':       await editWordPressDefaults(config); break;
-      case 'server':   await editPackageServer(config);   break;
-      case 'themes':   await editThemes(config);          break;
-      case 'plugins':  await editPlugins(config);         break;
+      case 'server':   await editPackageServer(config);    break;
+      case 'themes':   await editThemes(config);           break;
+      case 'plugins':  await editPlugins(config);          break;
     }
   }
 }
