@@ -16,6 +16,11 @@
 
 Instead of manually downloading WordPress, configuring the database, running through the 5-minute install, and adding SSL certificates, this tool does it all automatically—including downloading and activating your favorite premium themes and plugins from a private package server.
 
+## Roadmap
+
+- [ ] Backup website
+- [ ] Restore website
+
 ### Key Features
 
 - **🚀 Interactive Setup:** Simple wizard for choosing site names, themes, and plugins.
