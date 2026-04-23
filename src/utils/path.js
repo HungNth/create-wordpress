@@ -9,7 +9,7 @@ export function getHomeDir() {
 }
 
 /**
- * Returns the config directory for create-wordpress.
+ * Returns the config directory for the CLI.
  * Unified on all platforms: ~/.config/create-wordpress
  * On Windows this maps to %USERPROFILE%\.config\create-wordpress
  */

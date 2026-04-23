@@ -60,7 +60,7 @@ async function fetchMetadata(serverUrl, slug, apiKey) {
 
 /**
  * Downloads the package zip from the given URL into
- * ~/.config/create-wordpress/packages/{slug}/{slug}.zip
+ * ~/.config/create-wordpress/cache/packages/{slug}/{slug}.zip
  * @returns {string} Absolute path to the downloaded zip.
  */
 async function downloadPackage(downloadUrl, slug) {

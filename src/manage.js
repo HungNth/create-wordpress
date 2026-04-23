@@ -283,7 +283,7 @@ const ACTIONS = [
 
 /**
  * Interactive site configuration flow.
- * Called when user runs `create-wordpress --config`
+ * Called when user runs `create-wp --config`
  */
 export async function manageSite() {
   console.log(chalk.bold.cyan('\n⚙️   Site Configuration\n'));

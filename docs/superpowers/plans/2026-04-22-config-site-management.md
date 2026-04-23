@@ -16,7 +16,7 @@
 | ------------------------- | ------ | --------------------------------------------------------- |
 | `src/manage.js`           | Create | Site picker + 3 sub-commands: admin creds, theme, plugins |
 | `src/wpcli.js`            | Modify | Export `runWpCommand()` for arbitrary wp-cli calls        |
-| `bin/create-wordpress.js` | Modify | Add `--config` arg parsing                                |
+| `bin/create-wp.js` | Modify | Add `--config` arg parsing                                |
 
 ---
 
@@ -325,7 +325,7 @@ const ACTIONS = [
 
 /**
  * Interactive site configuration flow.
- * Called when user runs `create-wordpress --config`
+ * Called when user runs `create-wp --config`
  */
 export async function manageSite() {
     console.log(chalk.bold.cyan('\n⚙️   Site Configuration\n'));
@@ -373,7 +373,7 @@ git commit -m "feat: add --config site management module"
 
 **Files:**
 
-- Modify: `bin/create-wordpress.js`
+- Modify: `bin/create-wp.js`
 
 - [ ] **Step 1: Add import**
 
@@ -397,17 +397,17 @@ if (configIndex !== -1) {
 
 - [ ] **Step 3: Verify**
 
-Run: `node --check bin/create-wordpress.js && echo "OK"`
+Run: `node --check bin/create-wp.js && echo "OK"`
 Expected: `OK`
 
 - [ ] **Step 4: Manual test**
 
-Run: `node bin/create-wordpress.js --config`
+Run: `node bin/create-wp.js --config`
 Expected: Shows site picker → action menu → executes chosen action
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add bin/create-wordpress.js
+git add bin/create-wp.js
 git commit -m "feat: wire --config arg to site management flow"
 ```

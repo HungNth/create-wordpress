@@ -1,4 +1,4 @@
-# create-wordpress Improvements Implementation Plan
+# create-wp Improvements Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -14,12 +14,12 @@
 
 | File                      | Action | Responsibility                                          |
 | ------------------------- | ------ | ------------------------------------------------------- |
-| `src/wordpress.js`        | Modify | Add version caching using `data.json` + `packages/` dir |
+| `src/wordpress.js`        | Modify | Add version caching using `data.json` + `cache/` dirs  |
 | `src/wpcli.js`            | Modify | Replace `shell: true` with resolved `wp` path           |
 | `src/herd.js`             | Modify | Replace `shell: true` with resolved `herd` path         |
 | `src/utils/which.js`      | Create | Cross-platform binary resolver (replaces `shell: true`) |
 | `src/delete.js`           | Create | Delete site directory + database                        |
-| `bin/create-wordpress.js` | Modify | Parse `--delete` arg, route to delete flow              |
+| `bin/create-wp.js` | Modify | Parse `--delete` arg, route to delete flow              |
 
 ---
 
@@ -277,7 +277,7 @@ git commit -m "fix: replace shell:true with resolved binary paths (DEP0190)"
 
 ### Task 2: Cache WordPress Core Downloads
 
-Reuse the same caching pattern as themes/plugins: store the zip in `~/.config/create-wordpress/packages/wordpress-core/` and track version in `data.json`.
+Reuse the same caching pattern as themes/plugins: store the zip in `~/.config/create-wordpress/cache/wordpress-core/` and track version in `data.json`.
 
 **Files:**
 
@@ -475,7 +475,7 @@ Expected: No output (success)
 
 - [ ] **Step 3: Manual test — first run downloads, second run uses cache**
 
-Run: `node bin/create-wordpress.js` twice with different site names.
+Run: `node bin/create-wp.js` twice with different site names.
 Expected: First run says `WordPress v6.x.x — downloaded`, second run says `WordPress v6.x.x — cached ✓`
 
 - [ ] **Step 4: Commit**
@@ -494,7 +494,7 @@ Parse `process.argv` for `--delete <site-name>`. If present, skip the creation f
 **Files:**
 
 - Create: `src/delete.js`
-- Modify: `bin/create-wordpress.js`
+- Modify: `bin/create-wp.js`
 
 - [ ] **Step 1: Create `src/delete.js`**
 
@@ -597,7 +597,7 @@ export async function deleteSite(siteName) {
 Run: `node --check src/delete.js`
 Expected: No output (success)
 
-- [ ] **Step 3: Update `bin/create-wordpress.js` — add arg parsing at the top of `main()`**
+- [ ] **Step 3: Update `bin/create-wp.js` — add arg parsing at the top of `main()`**
 
 Add the import at the top of the file (after existing imports):
 
@@ -615,7 +615,7 @@ if (deleteIndex !== -1) {
     const siteName = args[deleteIndex + 1];
     if (!siteName) {
         console.error(
-            chalk.red('✖  Usage: create-wordpress --delete <site-name>'),
+            chalk.red('✖  Usage: create-wp --delete <site-name>'),
         );
         process.exit(1);
     }
@@ -626,20 +626,20 @@ if (deleteIndex !== -1) {
 
 - [ ] **Step 4: Verify file compiles**
 
-Run: `node --check bin/create-wordpress.js`
+Run: `node --check bin/create-wp.js`
 Expected: No output (success)
 
 - [ ] **Step 5: Manual test — delete an existing test site**
 
-Run: `node bin/create-wordpress.js --delete npx-01`
+Run: `node bin/create-wp.js --delete npx-01`
 Expected: Shows directory + database info, asks confirmation, deletes both on 'Y'
 
-Run: `node bin/create-wordpress.js --delete nonexistent-site`
+Run: `node bin/create-wp.js --delete nonexistent-site`
 Expected: Shows "Nothing found" error message
 
 - [ ] **Step 6: Commit**
 
 ```bash
-git add src/delete.js bin/create-wordpress.js
+git add src/delete.js bin/create-wp.js
 git commit -m "feat: add --delete argument to remove sites and databases"
 ```
