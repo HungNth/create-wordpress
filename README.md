@@ -23,6 +23,7 @@ Instead of manually downloading WordPress, configuring the database, running thr
 - **🗄️ Database Automation:** Automatically creates MySQL databases via `mysql2`.
 - **🔒 Automatic SSL:** Seamless integration with `herd secure` to instantly provision local HTTPS (`https://site-name.test`).
 - **📦 Private Package Server:** Connects to a private update server to download premium themes and plugins.
+- **🛠️ Settings Editor:** Use `--settings` to update the saved CLI defaults in `config.json`.
 - **⚙️ Site Configuration:** Use `--config` to change admin credentials, install themes, or add plugins to existing sites.
 - **🧹 Easy Cleanup:** Use `--delete` to instantly wipe a site directory and drop its database.
 
@@ -87,6 +88,26 @@ create-wp
 
 ---
 
+### Edit saved CLI settings
+
+```bash
+create-wp --settings
+```
+
+Opens an interactive editor for `~/.config/create-wordpress/config.json` so you can update the saved defaults after first run.
+
+This is useful when you want to change:
+
+- websites path
+- database username, password, port, or socket
+- default WordPress admin username, password, or email
+- package server URL or API key
+- theme list, default theme, or plugin list
+
+Changes are only written when you choose **Save & Exit**.
+
+---
+
 ### Configure an existing site
 
 ```bash
@@ -127,6 +148,12 @@ Config file location:
 
 - **macOS:** `~/.config/create-wordpress/config.json`
 - **Windows:** `~/.config/create-wordpress/config.json`
+
+You can edit this file manually, or run:
+
+```bash
+create-wp --settings
+```
 
 Cache directory:
 
