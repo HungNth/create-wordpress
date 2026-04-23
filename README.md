@@ -19,7 +19,7 @@ Instead of manually downloading WordPress, configuring the database, running thr
 ### Key Features
 
 - **🚀 Interactive Setup:** Simple wizard for choosing site names, themes, and plugins.
-- **⚡ Smart Caching:** WordPress core, themes, and plugins are cached locally in `~/.config/create-wordpress/` to prevent redundant downloads on future runs.
+- **⚡ Smart Caching:** WordPress core, themes, and plugins are cached locally in `~/.config/create-wordpress/cache/` to prevent redundant downloads on future runs.
 - **🗄️ Database Automation:** Automatically creates MySQL databases via `mysql2`.
 - **🔒 Automatic SSL:** Seamless integration with `herd secure` to instantly provision local HTTPS (`https://site-name.test`).
 - **📦 Private Package Server:** Connects to a private update server to download premium themes and plugins.
@@ -125,8 +125,14 @@ Both modes show a summary of what will be deleted (directory + database) and ask
 
 Config file location:
 
-- **macOS/Linux:** `~/.config/create-wordpress/config.json`
-- **Windows:** `%APPDATA%\create-wordpress\config.json`
+- **macOS:** `~/.config/create-wordpress/config.json`
+- **Windows:** `~/.config/create-wordpress/config.json`
+
+Cache directory:
+
+- **WordPress core ZIPs:** `~/.config/create-wordpress/cache/wordpress-core/`
+- **Theme and plugin ZIPs:** `~/.config/create-wordpress/cache/packages/`
+- **Version metadata:** `~/.config/create-wordpress/data.json`
 
 ### Example `config.json`
 
@@ -163,7 +169,8 @@ Config file location:
 
 ## Architecture
 
-- **Smart caching:** WordPress core, themes, and plugins track versions in `~/.config/create-wordpress/data.json`. Downloads only happen when the upstream version is newer than the local cache.
+- **Unified config path:** On both macOS and Windows, configuration is stored in `~/.config/create-wordpress/config.json`.
+- **Smart caching:** WordPress core ZIPs live in `~/.config/create-wordpress/cache/wordpress-core/`, theme and plugin ZIPs live in `~/.config/create-wordpress/cache/packages/`, and versions are tracked in `~/.config/create-wordpress/data.json`.
 - **Cross-platform binary resolution:** On Windows, Herd injects WP-CLI as `wp.bat`. The tool detects `.bat`/`.cmd` extensions and routes via `cmd.exe /c` to avoid the Node.js `DEP0190` shell warning.
 - **Admin ID resolution:** When changing admin credentials, the tool runs `wp user list --field=ID --number=1` to find the real admin user ID (which may not be `1`), falling back to a direct MySQL query if WP-CLI is unavailable.
 - **DB name from config:** `DB_NAME` and `$table_prefix` are parsed directly from the site's `wp-config.php`, so the tool works correctly with existing sites that have a different directory name vs. database name.
