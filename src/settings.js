@@ -245,15 +245,115 @@ async function editPlugins(config) {
   }
 }
 
+async function editWpTweaks(config) {
+  const TWEAK_TYPE_LABELS = {
+    config_set: 'config_set (wp-config.php constant)',
+    rewrite_structure: 'rewrite_structure (permalink)',
+    option_update: 'option_update (wp_options)',
+  };
+
+  const TWEAK_ACTIONS = [
+    { name: '➕  Add a tweak', value: 'add' },
+    { name: '🗑️   Remove tweak(s)', value: 'remove' },
+    { name: '← Back', value: 'back' },
+  ];
+
+  while (true) {
+    const tweaks = config.wp_tweaks || [];
+
+    console.log(chalk.bold.cyan('\n⚙️   WordPress Tweaks:\n'));
+    if (tweaks.length === 0) {
+      console.log(chalk.gray('   (none)\n'));
+    } else {
+      tweaks.forEach((t, i) => {
+        let label;
+        if (t.type === 'config_set')        label = `${chalk.yellow('config')}  ${t.key} = ${t.value}${t.raw ? chalk.gray(' --raw') : ''}`;
+        else if (t.type === 'rewrite_structure') label = `${chalk.blue('rewrite')} ${t.value}`;
+        else                                label = `${chalk.cyan('option')}  ${t.key} = ${t.value}`;
+        console.log(`  ${chalk.gray(String(i + 1).padStart(2))}. ${label}`);
+      });
+      console.log();
+    }
+
+    const { action } = await inquirer.prompt([{
+      type: 'list',
+      name: 'action',
+      message: 'WordPress tweaks:',
+      choices: TWEAK_ACTIONS,
+    }]);
+
+    if (action === 'back') break;
+
+    if (action === 'add') {
+      const { type } = await inquirer.prompt([{
+        type: 'list',
+        name: 'type',
+        message: 'Tweak type:',
+        choices: Object.entries(TWEAK_TYPE_LABELS).map(([v, n]) => ({ name: n, value: v })),
+      }]);
+
+      if (type === 'rewrite_structure') {
+        const { value } = await inquirer.prompt([
+          { type: 'input', name: 'value', message: 'Permalink structure:', default: '/%category%/%postname%/' },
+        ]);
+        if (!config.wp_tweaks) config.wp_tweaks = [];
+        config.wp_tweaks.push({ type: 'rewrite_structure', value: value.trim() });
+        console.log(chalk.green('✔  Added rewrite_structure\n'));
+      } else if (type === 'config_set') {
+        const { key, value, raw } = await inquirer.prompt([
+          { type: 'input',   name: 'key',   message: 'Constant name (e.g. WP_DEBUG):' },
+          { type: 'input',   name: 'value', message: 'Value:' },
+          { type: 'confirm', name: 'raw',   message: 'Use --raw flag (for booleans/integers)?', default: false },
+        ]);
+        if (key && value) {
+          if (!config.wp_tweaks) config.wp_tweaks = [];
+          config.wp_tweaks.push({ type: 'config_set', key: key.trim(), value: value.trim(), raw });
+          console.log(chalk.green(`✔  Added config_set ${key}\n`));
+        }
+      } else {
+        const { key, value } = await inquirer.prompt([
+          { type: 'input', name: 'key',   message: 'Option name (e.g. timezone_string):' },
+          { type: 'input', name: 'value', message: 'Option value:' },
+        ]);
+        if (key && value) {
+          if (!config.wp_tweaks) config.wp_tweaks = [];
+          config.wp_tweaks.push({ type: 'option_update', key: key.trim(), value: value.trim() });
+          console.log(chalk.green(`✔  Added option_update ${key}\n`));
+        }
+      }
+    }
+
+    if (action === 'remove' && tweaks.length > 0) {
+      const { indicesToRemove } = await inquirer.prompt([{
+        type: 'checkbox',
+        name: 'indicesToRemove',
+        message: 'Select tweaks to remove:',
+        choices: tweaks.map((t, i) => {
+          const label = t.type === 'config_set'        ? `config_set ${t.key} = ${t.value}`
+                      : t.type === 'rewrite_structure' ? `rewrite_structure ${t.value}`
+                      : `option_update ${t.key} = ${t.value}`;
+          return { name: label, value: i };
+        }),
+        pageSize: 20,
+      }]);
+      // Remove in reverse order to keep indices stable
+      const toRemove = new Set(indicesToRemove);
+      config.wp_tweaks = config.wp_tweaks.filter((_, i) => !toRemove.has(i));
+      console.log(chalk.green(`✔  Removed ${indicesToRemove.length} tweak(s)\n`));
+    }
+  }
+}
+
 // ─── Main menu ────────────────────────────────────────────────────────────────
 
 const SETTINGS_SECTIONS = [
   { name: '📁  General          (websites path)', value: 'general' },
-  { name: '🗄️   Database         (host, port, credentials)', value: 'database' },
+  { name: '🗄️  Database         (host, port, credentials)', value: 'database' },
   { name: '🔑  WordPress        (default admin credentials)', value: 'wp' },
   { name: '📦  Package Server   (URL, API key)', value: 'server' },
   { name: '🎨  Themes           (manage theme list & default)', value: 'themes' },
   { name: '🔌  Plugins          (manage plugin list)', value: 'plugins' },
+  { name: '⚙️  WP Tweaks        (config_set, option, rewrite)', value: 'tweaks' },
   new inquirer.Separator(),
   { name: '💾  Save & Exit', value: 'save' },
   { name: '❌  Exit without saving', value: 'exit' },
@@ -306,6 +406,7 @@ export async function editSettings() {
       case 'server':   await editPackageServer(config);    break;
       case 'themes':   await editThemes(config);           break;
       case 'plugins':  await editPlugins(config);          break;
+      case 'tweaks':   await editWpTweaks(config);         break;
     }
   }
 }

@@ -24,7 +24,7 @@ Instead of manually downloading WordPress, configuring the database, running thr
 - **🔒 Automatic SSL:** Seamless integration with `herd secure` to instantly provision local HTTPS (`https://site-name.test`).
 - **📦 Private Package Server:** Connects to a private update server to download premium themes and plugins.
 - **🛠️ Settings Editor:** Use `--settings` to update the saved CLI defaults in `config.json`.
-- **⚙️ Site Configuration:** Use `--config` to change admin credentials, install themes, or add plugins to existing sites.
+- **⚙️ Site Configuration:** Use `--config` to change admin credentials, install themes, add plugins, or apply saved WordPress tweaks to existing sites.
 - **🧹 Easy Cleanup:** Use `--delete` to instantly wipe a site directory and drop its database.
 
 ---
@@ -77,12 +77,12 @@ create-wp
 3. **Theme selection** — Choose from a list of themes defined in your config.
 4. **Plugin selection** — Multi-select checkbox to pick plugins.
 5. **Provisioning:**
-    - Creates the site directory in your Herd path.
-    - Creates a blank MySQL database.
-    - Downloads WordPress core (uses cache on subsequent runs).
-    - Generates `wp-config.php` and runs the WP install via WP-CLI.
-    - Installs and activates the selected theme and plugins.
-    - Provisions an SSL cert via `herd secure`.
+   - Creates the site directory in your Herd path.
+   - Creates a blank MySQL database.
+   - Downloads WordPress core (uses cache on subsequent runs).
+   - Generates `wp-config.php` and runs the WP install via WP-CLI.
+   - Installs and activates the selected theme and plugins.
+   - Provisions an SSL cert via `herd secure`.
 
 </details>
 
@@ -103,6 +103,7 @@ This is useful when you want to change:
 - default WordPress admin username, password, or email
 - package server URL or API key
 - theme list, default theme, or plugin list
+- `wp_tweaks` used by `create-wp --config`
 
 Changes are only written when you choose **Save & Exit**.
 
@@ -114,13 +115,22 @@ Changes are only written when you choose **Save & Exit**.
 create-wp --config
 ```
 
-Launches the site configuration wizard with 3 options:
+Launches the site configuration wizard with 4 options:
 
-| Option                      | Description                                                                                                                            |
-| --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| 🔐 Change admin credentials | Update admin username (via MySQL), password and email (via WP-CLI). Reads `DB_NAME` and `$table_prefix` directly from `wp-config.php`. |
-| 🎨 Install theme            | Pick a theme from your config list and install it on the selected site.                                                                |
-| 🔌 Install plugins          | Multi-select checkbox to install one or more plugins from your config list.                                                            |
+| Option                           | Description                                                                                                                                            |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 🔐 Change admin credentials      | Update admin username (via MySQL), password and email (via WP-CLI). Reads `DB_NAME` and `$table_prefix` directly from `wp-config.php`.                 |
+| 🎨 Install theme                 | Pick a theme from your config list and install it on the selected site.                                                                                |
+| 🔌 Install plugins               | Multi-select checkbox to install one or more plugins from your config list.                                                                            |
+| ⚙️ Apply WordPress configuration | Applies each entry in `wp_tweaks` from `config.json` to the selected site via WP-CLI. Supports `config_set`, `rewrite_structure`, and `option_update`. |
+
+`Apply WordPress configuration` reads the `wp_tweaks` array from `config.json` and runs each tweak in order:
+
+- `config_set` -> `wp config set <KEY> <VALUE>` with optional `--raw`
+- `rewrite_structure` -> `wp rewrite structure <VALUE> --hard`
+- `option_update` -> `wp option update <KEY> <VALUE>`
+- `language_core` -> `wp language core <KEY> <VALUE>`
+- `site` -> `wp site <KEY> <VALUE>`
 
 ---
 
@@ -165,32 +175,41 @@ Cache directory:
 
 ```json
 {
-    "websites_path": "F:\\laravel-herd\\wordpress",
-    "server_url": "https://your-private-repo.com/api",
-    "package_api_key": "YOUR_SECRET_KEY",
-    "default_admin_username": "admin",
-    "default_admin_password": "password123",
-    "default_admin_email": "admin@example.com",
-    "database_port": 3306,
-    "db_username": "root",
-    "db_password": "",
-    "default_theme_slug": "flatsome",
-    "themes": [
-        { "name": "Flatsome", "slug": "flatsome" },
-        { "name": "Bricks", "slug": "bricks" }
-    ],
-    "plugins": [
-        {
-            "name": "Advanced Custom Fields PRO",
-            "slug": "advanced-custom-fields-pro"
-        },
-        { "name": "WP Rocket", "slug": "wp-rocket" }
-    ]
+  "websites_path": "F:\\laravel-herd\\wordpress",
+  "server_url": "https://your-private-repo.com/api",
+  "package_api_key": "YOUR_SECRET_KEY",
+  "default_admin_username": "admin",
+  "default_admin_password": "password123",
+  "default_admin_email": "admin@example.com",
+  "database_port": 3306,
+  "db_username": "root",
+  "db_password": "",
+  "default_theme_slug": "flatsome",
+  "themes": [
+    { "name": "Flatsome", "slug": "flatsome" },
+    { "name": "Bricks", "slug": "bricks" }
+  ],
+  "plugins": [
+    {
+      "name": "Advanced Custom Fields PRO",
+      "slug": "advanced-custom-fields-pro"
+    },
+    { "name": "WP Rocket", "slug": "wp-rocket" }
+  ],
+  "wp_tweaks": [
+    { "type": "config_set", "key": "WP_DEBUG", "value": "true", "raw": true },
+    { "type": "rewrite_structure", "value": "/%category%/%postname%/" },
+    {
+      "type": "option_update",
+      "key": "timezone_string",
+      "value": "Asia/Ho_Chi_Minh"
+    }
+  ]
 }
 ```
 
 > [!NOTE]
-> If `server_url` and `package_api_key` are left empty, the CLI skips theme and plugin downloads — WordPress core setup still works perfectly.
+> If `server_url` and `package_api_key` are left empty, the CLI skips theme and plugin downloads - WordPress core setup still works perfectly.
 
 ---
 

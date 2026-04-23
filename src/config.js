@@ -34,6 +34,38 @@ const DEFAULT_PLUGINS = [
   { name: 'Perfmatters', slug: 'perfmatters' },
 ];
 
+const DEFAULT_WP_TWEAKS = [
+  // ── wp-config.php constants ──────────────────────────────────────────────
+  { type: 'config_set', key: 'WP_DEBUG',           value: 'true',  raw: true },
+  { type: 'config_set', key: 'WP_DEBUG_LOG',       value: 'true',  raw: true },
+  { type: 'config_set', key: 'WP_DEBUG_DISPLAY',   value: 'true',  raw: true },
+  { type: 'config_set', key: 'WP_MEMORY_LIMIT',    value: '256M',  raw: false },
+  { type: 'config_set', key: 'AUTOSAVE_INTERVAL',  value: '600',   raw: true },
+  { type: 'config_set', key: 'WP_POST_REVISIONS',  value: '5',     raw: true },
+  { type: 'config_set', key: 'EMPTY_TRASH_DAYS',   value: '21',    raw: true },
+  // ── Permalink structure ───────────────────────────────────────────────────
+  { type: 'rewrite_structure', value: '/%category%/%postname%/' },
+  // ── wp_options ────────────────────────────────────────────────────────────
+  { type: 'option_update', key: 'timezone_string',       value: 'Asia/Ho_Chi_Minh' },
+  { type: 'option_update', key: 'time_format',           value: 'H:i' },
+  { type: 'option_update', key: 'date_format',           value: 'd/m/Y' },
+  { type: 'option_update', key: 'large_size_w',          value: '0' },
+  { type: 'option_update', key: 'large_size_h',          value: '0' },
+  { type: 'option_update', key: 'medium_large_size_w',   value: '0' },
+  { type: 'option_update', key: 'medium_large_size_h',   value: '0' },
+  { type: 'option_update', key: 'medium_size_w',         value: '0' },
+  { type: 'option_update', key: 'medium_size_h',         value: '0' },
+  { type: 'option_update', key: 'thumbnail_size_w',      value: '0' },
+  { type: 'option_update', key: 'thumbnail_size_h',      value: '0' },
+  { type: 'option_update', key: 'thumbnail_crop',        value: '0' },
+  { type: 'option_update', key: 'comment_moderation',    value: '1' },
+  { type: 'option_update', key: 'default_ping_status',   value: 'closed' },
+  { type: 'option_update', key: 'posts_per_page',        value: '30' },
+  { type: 'option_update', key: 'posts_per_rss',         value: '210' },
+  { type: 'option_update', key: 'rss_use_excerpt',       value: '1' },
+  { type: 'option_update', key: 'avatar_default',        value: 'identicon' },
+];
+
 // ─── Migration ─────────────────────────────────────────────────────────────────
 
 /**
@@ -53,6 +85,10 @@ function migrateConfig(config) {
   }
   if (!config.plugins || !Array.isArray(config.plugins) || config.plugins.length === 0) {
     config.plugins = DEFAULT_PLUGINS;
+    changed = true;
+  }
+  if (!config.wp_tweaks || !Array.isArray(config.wp_tweaks)) {
+    config.wp_tweaks = DEFAULT_WP_TWEAKS;
     changed = true;
   }
 
@@ -195,6 +231,7 @@ async function createConfig() {
       { name: 'Tocer', slug: 'tocer' },
       { name: 'Perfmatters', slug: 'perfmatters' },
     ],
+    wp_tweaks: DEFAULT_WP_TWEAKS,
   };
 
   // Ensure config directory exists
