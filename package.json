@@ -1,6 +1,6 @@
 {
   "name": "@thienhungdev/create-wp",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "CLI tool to scaffold WordPress sites with Laravel Herd",
   "type": "module",
   "bin": {
