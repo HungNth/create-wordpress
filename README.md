@@ -1,6 +1,6 @@
 <div align="center">
 
-# create-wp
+# Create WordPress CLI
 
 **A modern, lightning-fast CLI tool to scaffold WordPress sites effortlessly within the Laravel Herd environment.**
 
@@ -47,7 +47,7 @@ Before using this tool, make sure your system has the following installed:
 ### From GitHub
 
 ```bash
-npm install -g github:nth/create-wp
+npm install -g https://github.com/HungNth/create-wordpress.git
 ```
 
 ### From npm
