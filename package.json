@@ -1,31 +1,48 @@
 {
-    "name": "@thienhungdev/create-wp",
-    "version": "1.0.0",
-    "description": "CLI tool to scaffold WordPress sites with Laravel Herd",
-    "type": "module",
-    "bin": {
-        "create-wp": "./bin/create-wp.js"
-    },
-    "engines": {
-        "node": ">=18.0.0"
-    },
-    "keywords": [
-        "wordpress",
-        "laravel-herd",
-        "cli",
-        "scaffold",
-        "wp-cli"
-    ],
-    "files": [
-        "bin/",
-        "src/"
-    ],
-    "dependencies": {
-        "adm-zip": "^0.5.16",
-        "axios": "^1.7.7",
-        "chalk": "^5.3.0",
-        "inquirer": "^9.3.7",
-        "mysql2": "^3.11.3",
-        "ora": "^8.1.1"
-    }
+  "name": "@thienhungdev/create-wp",
+  "version": "1.0.0",
+  "description": "CLI tool to scaffold WordPress sites with Laravel Herd",
+  "type": "module",
+  "bin": {
+    "create-wp": "./bin/create-wp.js"
+  },
+  "scripts": {
+    "test": "node --check bin/create-wp.js && node --check src/config.js && node --check src/db.js && node --check src/delete.js && node --check src/herd.js && node --check src/manage.js && node --check src/packages.js && node --check src/settings.js && node --check src/wordpress.js && node --check src/wpcli.js && node --check src/utils/path.js && node --check src/utils/which.js",
+    "prepublishOnly": "npm test && npm pack --dry-run"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "wordpress",
+    "laravel-herd",
+    "cli",
+    "scaffold",
+    "wp-cli"
+  ],
+  "files": [
+    "bin/",
+    "src/"
+  ],
+  "dependencies": {
+    "adm-zip": "^0.5.16",
+    "axios": "^1.7.7",
+    "chalk": "^5.3.0",
+    "inquirer": "^9.3.7",
+    "mysql2": "^3.11.3",
+    "ora": "^8.1.1"
+  },
+  "license": "MIT",
+  "author": "Thien Hung",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/HungNth/create-wordpress.git"
+  },
+  "bugs": {
+    "url": "https://github.com/HungNth/create-wordpress/issues"
+  },
+  "homepage": "https://github.com/HungNth/create-wordpress#readme"
 }
