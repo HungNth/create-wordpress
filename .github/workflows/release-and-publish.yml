@@ -1,0 +1,90 @@
+name: Release and publish to npm
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - package.json
+
+permissions:
+  contents: write
+
+jobs:
+  release-and-publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: https://registry.npmjs.org/
+          cache: npm
+
+      - name: Detect version change
+        id: version
+        shell: bash
+        run: |
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          PREVIOUS_VERSION=$(git show "${{ github.event.before }}:package.json" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>console.log(JSON.parse(s).version))" 2>/dev/null || echo "")
+
+          echo "current=$CURRENT_VERSION" >> "$GITHUB_OUTPUT"
+          echo "previous=$PREVIOUS_VERSION" >> "$GITHUB_OUTPUT"
+
+          if [ -n "$PREVIOUS_VERSION" ] && [ "$CURRENT_VERSION" = "$PREVIOUS_VERSION" ]; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Check whether release tag already exists
+        id: tag_check
+        if: steps.version.outputs.changed == 'true'
+        run: |
+          if git rev-parse "v${{ steps.version.outputs.current }}" >/dev/null 2>&1; then
+            echo "should_release=false" >> $GITHUB_OUTPUT
+          else
+            echo "should_release=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Skip if package version did not change
+        if: steps.version.outputs.changed != 'true'
+        run: echo "package.json changed, but version did not change. Skipping release."
+
+      - name: Skip if release tag already exists
+        if: steps.version.outputs.changed == 'true' && steps.tag_check.outputs.should_release != 'true'
+        run: echo "Tag v${{ steps.version.outputs.current }} already exists. Skipping release."
+
+      - name: Install dependencies
+        if: steps.version.outputs.changed == 'true' && steps.tag_check.outputs.should_release == 'true'
+        run: npm ci
+
+      - name: Run tests
+        if: steps.version.outputs.changed == 'true' && steps.tag_check.outputs.should_release == 'true'
+        run: npm test
+
+      - name: Verify package contents
+        if: steps.version.outputs.changed == 'true' && steps.tag_check.outputs.should_release == 'true'
+        run: npm pack --dry-run
+
+      - name: Publish to npm
+        if: steps.version.outputs.changed == 'true' && steps.tag_check.outputs.should_release == 'true'
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Create GitHub release
+        if: steps.version.outputs.changed == 'true' && steps.tag_check.outputs.should_release == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "v${{ steps.version.outputs.current }}" \
+            --target "${{ github.sha }}" \
+            --title "v${{ steps.version.outputs.current }}" \
+            --generate-notes
