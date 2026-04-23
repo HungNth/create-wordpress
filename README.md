@@ -1,6 +1,6 @@
 <div align="center">
 
-# Create WordPress for Laravel Herd
+# create-wp
 
 **A modern, lightning-fast CLI tool to scaffold WordPress sites effortlessly within the Laravel Herd environment.**
 
@@ -12,17 +12,18 @@
 
 ## Overview
 
-`create-wordpress` is an interactive Node.js command-line tool designed to completely automate local WordPress development setup when using [Laravel Herd](https://herd.laravel.com).
+`create-wp` is an interactive Node.js command-line tool designed to completely automate local WordPress development setup when using [Laravel Herd](https://herd.laravel.com).
 
 Instead of manually downloading WordPress, configuring the database, running through the 5-minute install, and adding SSL certificates, this tool does it all automatically—including downloading and activating your favorite premium themes and plugins from a private package server.
 
 ### Key Features
 
 - **🚀 Interactive Setup:** Simple wizard for choosing site names, themes, and plugins.
-- **⚡ Smart Caching:** WordPress core, themes, and plugins are cached locally in `~/.config/create-wordpress` to prevent redundant downloads on future runs.
+- **⚡ Smart Caching:** WordPress core, themes, and plugins are cached locally in `~/.config/create-wordpress/` to prevent redundant downloads on future runs.
 - **🗄️ Database Automation:** Automatically creates MySQL databases via `mysql2`.
 - **🔒 Automatic SSL:** Seamless integration with `herd secure` to instantly provision local HTTPS (`https://site-name.test`).
-- **📦 Package Management Integration:** Connects to a private update server to download premium themes and plugins.
+- **📦 Private Package Server:** Connects to a private update server to download premium themes and plugins.
+- **⚙️ Site Configuration:** Use `--config` to change admin credentials, install themes, or add plugins to existing sites.
 - **🧹 Easy Cleanup:** Use `--delete` to instantly wipe a site directory and drop its database.
 
 ---
@@ -35,81 +36,97 @@ Before using this tool, make sure your system has the following installed:
 2. **[Laravel Herd](https://herd.laravel.com)** (Must be currently running)
 3. **[WP-CLI](https://wp-cli.org/)** (Must be available in your system `PATH`)
 
-> [!IMPORTANT]  
-> If WP-CLI or Laravel Herd are not detected in your PATH, the CLI will throw an error or skip certain configurations. On Windows, make sure Herd's injected paths are accessible globally.
+> [!IMPORTANT]
+> If WP-CLI or Laravel Herd are not detected in your PATH, the CLI will throw an error or skip certain steps. On Windows, make sure Herd's injected paths are accessible globally.
 
 ---
 
 ## Installation
 
-You can run this package directly using `npx` without needing to install it globally:
+### From GitHub
 
 ```bash
-npx create-wordpress
+npm install -g github:nth/create-wp
 ```
 
-Or, if you prefer to install it globally:
+### From npm
 
 ```bash
-npm install -g create-wordpress
-create-wordpress
+npm install -g @nth/create-wp
 ```
+
+> [!NOTE]
+> On first run, the tool will launch a one-time setup wizard to configure your paths, database credentials, and default admin details. Settings are saved to `~/.config/create-wordpress/config.json`.
 
 ---
 
 ## Usage
 
-### Creating a new Website
-
-Simply run the command to launch the interactive wizard:
+### Create a new WordPress site
 
 ```bash
-npx create-wordpress
+create-wp
 ```
 
 <details>
-<summary><strong>What happens when you run this?</strong></summary>
+<summary><strong>What happens step by step</strong></summary>
 
-1. **Config check**: On the very first run, it will ask for your default paths (like `~/Herd`), database credentials, and default WordPress admin details. These are saved to `~/.config/create-wordpress/config.json`.
-2. **Site Name**: Prompts for a website name (e.g., `my-shop`). It automatically normalizes this to a URL-friendly slug and ensures no database or directory collision exists.
-3. **Themes & Plugins**: Select from your predefined list of themes and plugins.
-4. **Provisioning**:
-    - Creates the directory in your Herd path.
-    - Connects to MySQL and creates a blank database.
-    - Resolves WordPress core (using cache or live download).
-    - Generates `wp-config.php` and runs the core installation via WP-CLI.
-    - Installs and activates selected themes and plugins.
-    - Provisions an SSL cert using `herd secure`.
-      </details>
+1. **Config check** — Loads `~/.config/create-wordpress/config.json`, or runs the setup wizard on first run.
+2. **Site name** — Prompts for a name (normalised to kebab-case). Validates that no directory or database collision exists.
+3. **Theme selection** — Choose from a list of themes defined in your config.
+4. **Plugin selection** — Multi-select checkbox to pick plugins.
+5. **Provisioning:**
+    - Creates the site directory in your Herd path.
+    - Creates a blank MySQL database.
+    - Downloads WordPress core (uses cache on subsequent runs).
+    - Generates `wp-config.php` and runs the WP install via WP-CLI.
+    - Installs and activates the selected theme and plugins.
+    - Provisions an SSL cert via `herd secure`.
 
-### Deleting a Website
+</details>
 
-To remove a site directory and completely drop its associated database, use the `--delete` flag:
+---
 
-**Interactive Mode:**
-If you run it without specifying a name, you will get an interactive checkbox list to select one or multiple sites to delete:
-
-```bash
-npx create-wordpress --delete
-```
-
-**Direct Mode:**
-If you know the exact name, pass it directly:
+### Configure an existing site
 
 ```bash
-npx create-wordpress --delete my-site-name
+create-wp --config
 ```
+
+Launches the site configuration wizard with 3 options:
+
+| Option                      | Description                                                                                                                            |
+| --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| 🔐 Change admin credentials | Update admin username (via MySQL), password and email (via WP-CLI). Reads `DB_NAME` and `$table_prefix` directly from `wp-config.php`. |
+| 🎨 Install theme            | Pick a theme from your config list and install it on the selected site.                                                                |
+| 🔌 Install plugins          | Multi-select checkbox to install one or more plugins from your config list.                                                            |
+
+---
+
+### Delete a WordPress site
+
+**Interactive mode** — shows a multi-select list of all existing sites:
+
+```bash
+create-wp --delete
+```
+
+**Direct mode** — delete a specific site immediately:
+
+```bash
+create-wp --delete my-site-name
+```
+
+Both modes show a summary of what will be deleted (directory + database) and ask for a single confirmation before any destructive action.
 
 ---
 
 ## Configuration
 
-On your first run, the tool generates a configuration file.
+Config file location:
 
-- **macOS/Linux**: `~/.config/create-wordpress/config.json`
-- **Windows**: `%APPDATA%\create-wordpress\config.json`
-
-You can manually edit this file to change your default database credentials, Herd path, or append new items to the `themes` and `plugins` arrays.
+- **macOS/Linux:** `~/.config/create-wordpress/config.json`
+- **Windows:** `%APPDATA%\create-wordpress\config.json`
 
 ### Example `config.json`
 
@@ -120,9 +137,11 @@ You can manually edit this file to change your default database credentials, Her
     "package_api_key": "YOUR_SECRET_KEY",
     "default_admin_username": "admin",
     "default_admin_password": "password123",
+    "default_admin_email": "admin@example.com",
     "database_port": 3306,
     "db_username": "root",
     "db_password": "",
+    "default_theme_slug": "flatsome",
     "themes": [
         { "name": "Flatsome", "slug": "flatsome" },
         { "name": "Bricks", "slug": "bricks" }
@@ -137,13 +156,14 @@ You can manually edit this file to change your default database credentials, Her
 }
 ```
 
-> [!NOTE]  
-> If `server_url` and `package_api_key` are left empty during setup, the CLI will skip downloading premium plugins and themes, but the core WordPress setup will still function perfectly.
+> [!NOTE]
+> If `server_url` and `package_api_key` are left empty, the CLI skips theme and plugin downloads — WordPress core setup still works perfectly.
 
 ---
 
-## Architecture details
+## Architecture
 
-- Uses **`AdmZip`** for rapid in-memory extraction of WordPress core without relying on system `unzip` commands.
-- Caching system tracks package versions in a `data.json` file. It pings your custom package server metadata endpoint to check if the local ZIP is outdated before initiating any downloads.
-- Cross-platform binary resolution ensures Windows `.bat`/`.cmd` files (like Herd's injected `wp.bat`) gracefully spawn within a `cmd.exe` context to avoid Node.js `DEP0190` shell warnings.
+- **Smart caching:** WordPress core, themes, and plugins track versions in `~/.config/create-wordpress/data.json`. Downloads only happen when the upstream version is newer than the local cache.
+- **Cross-platform binary resolution:** On Windows, Herd injects WP-CLI as `wp.bat`. The tool detects `.bat`/`.cmd` extensions and routes via `cmd.exe /c` to avoid the Node.js `DEP0190` shell warning.
+- **Admin ID resolution:** When changing admin credentials, the tool runs `wp user list --field=ID --number=1` to find the real admin user ID (which may not be `1`), falling back to a direct MySQL query if WP-CLI is unavailable.
+- **DB name from config:** `DB_NAME` and `$table_prefix` are parsed directly from the site's `wp-config.php`, so the tool works correctly with existing sites that have a different directory name vs. database name.

@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import axios from 'axios';
 import ora from 'ora';
-import { getConfigDir } from './utils/path.js';
+import { getConfigDir, getPackagesCacheDir } from './utils/path.js';
 
 // ─── Paths ───────────────────────────────────────────────────────────────────
 
@@ -11,7 +11,7 @@ function getDataJsonPath() {
 }
 
 function getPackagesDir() {
-  return path.join(getConfigDir(), 'packages');
+  return getPackagesCacheDir();
 }
 
 // ─── data.json helpers ───────────────────────────────────────────────────────

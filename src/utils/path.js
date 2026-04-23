@@ -10,14 +10,10 @@ export function getHomeDir() {
 
 /**
  * Returns the config directory for create-wordpress.
- * - macOS/Linux: ~/.config/create-wordpress
- * - Windows:     %APPDATA%\create-wordpress
+ * Unified on all platforms: ~/.config/create-wordpress
+ * On Windows this maps to %USERPROFILE%\.config\create-wordpress
  */
 export function getConfigDir() {
-  if (process.platform === 'win32') {
-    const appData = process.env.APPDATA || path.join(getHomeDir(), 'AppData', 'Roaming');
-    return path.join(appData, 'create-wordpress');
-  }
   return path.join(getHomeDir(), '.config', 'create-wordpress');
 }
 
@@ -29,7 +25,31 @@ export function getConfigFilePath() {
 }
 
 /**
- * Returns the default websites path (~\/Herd).
+ * Returns the cache directory.
+ * ~/.config/create-wordpress/cache
+ */
+export function getCacheDir() {
+  return path.join(getConfigDir(), 'cache');
+}
+
+/**
+ * Returns the packages cache directory.
+ * ~/.config/create-wordpress/cache/packages
+ */
+export function getPackagesCacheDir() {
+  return path.join(getCacheDir(), 'packages');
+}
+
+/**
+ * Returns the WordPress core cache directory.
+ * ~/.config/create-wordpress/cache/wordpress-core
+ */
+export function getWordPressCacheDir() {
+  return path.join(getCacheDir(), 'wordpress-core');
+}
+
+/**
+ * Returns the default websites path (~/Herd).
  */
 export function getDefaultWebsitesPath() {
   return path.join(getHomeDir(), 'Herd');

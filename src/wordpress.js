@@ -3,7 +3,7 @@ import AdmZip from 'adm-zip';
 import fs from 'fs';
 import path from 'path';
 import ora from 'ora';
-import { getConfigDir } from './utils/path.js';
+import { getConfigDir, getWordPressCacheDir } from './utils/path.js';
 
 const WP_VERSION_API = 'https://api.wordpress.org/core/version-check/1.7/';
 const WP_CACHE_SLUG = 'wordpress-core';
@@ -14,8 +14,8 @@ function getDataJsonPath() {
   return path.join(getConfigDir(), 'data.json');
 }
 
-function getPackagesDir() {
-  return path.join(getConfigDir(), 'packages');
+function getWpCoreDir() {
+  return getWordPressCacheDir();
 }
 
 function loadDataJson() {
@@ -80,9 +80,9 @@ async function resolveWordPressZip() {
 
   // Download
   spinner.text = `Downloading WordPress v${version}...`;
-  const slugDir = path.join(getPackagesDir(), WP_CACHE_SLUG);
-  fs.mkdirSync(slugDir, { recursive: true });
-  const zipPath = path.join(slugDir, `wordpress-${version}-no-content.zip`);
+  const wpCacheDir = getWpCoreDir();
+  fs.mkdirSync(wpCacheDir, { recursive: true });
+  const zipPath = path.join(wpCacheDir, `wordpress-${version}-no-content.zip`);
 
   try {
     const response = await axios({

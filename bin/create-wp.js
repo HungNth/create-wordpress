@@ -133,7 +133,7 @@ async function promptPlugins(config) {
 async function main() {
   console.log(
     chalk.bold.cyan(
-      '\n🚀  create-wordpress  —  WordPress site generator for Laravel Herd\n'
+      '\n🚀  create-wp  —  WordPress site generator for Laravel Herd\n'
     )
   );
 

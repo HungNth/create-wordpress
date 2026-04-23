@@ -1,10 +1,10 @@
 {
-    "name": "create-wordpress",
+    "name": "@nth/create-wp",
     "version": "1.0.0",
     "description": "CLI tool to scaffold WordPress sites with Laravel Herd",
     "type": "module",
     "bin": {
-        "create-wordpress": "./bin/create-wordpress.js"
+        "create-wp": "./bin/create-wp.js"
     },
     "engines": {
         "node": ">=18.0.0"

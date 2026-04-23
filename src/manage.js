@@ -74,55 +74,101 @@ async function changeAdminCredentials(siteName, siteDir, config) {
     },
   ]);
 
+  const prefix = readTablePrefix(siteDir);
+  const dbName = readDbName(siteDir, siteName); // real DB name from wp-config.php
+  let wpcliOk = false;
+
+  // ── Step 0: Resolve admin user ID (not always 1) ──────────────────────────
+  let adminId = null;
+
   // Try WP-CLI first
-  const spinner = ora('Updating admin via WP-CLI...').start();
   try {
-    // Update user login (user ID 1 = first admin)
-    runWpCommand(['user', 'update', '1',
-      `--user_login=${username}`,
+    const raw = runWpCommand(
+      ['user', 'list', '--field=ID', '--number=1'],
+      siteDir
+    );
+    adminId = parseInt(raw.trim(), 10);
+  } catch {
+    // WP-CLI unavailable — will resolve via MySQL below
+  }
+
+  // Fallback: query MySQL for the first user ID
+  if (!adminId) {
+    let conn;
+    try {
+      conn = await createDbConnection(config);
+      await conn.execute(`USE \`${dbName}\``);
+      const [rows] = await conn.execute(
+        `SELECT ID FROM \`${prefix}users\` ORDER BY ID ASC LIMIT 1`
+      );
+      if (rows.length) adminId = rows[0].ID;
+    } catch {
+      // ignore
+    } finally {
+      if (conn) await conn.end();
+    }
+  }
+
+  if (!adminId) {
+    console.log(chalk.red('✖  Could not determine admin user ID. Aborting.\n'));
+    return;
+  }
+
+  console.log(chalk.gray(`   Admin user ID: ${adminId}`));
+
+
+  // NOTE: --user_login is intentionally excluded — WordPress core does NOT
+  // allow username changes via wp_update_user(). It must be done via direct SQL.
+  const spinner = ora('Updating password and email via WP-CLI...').start();
+  try {
+    runWpCommand(['user', 'update', String(adminId),
       `--user_pass=${password}`,
       `--user_email=${email}`,
     ], siteDir);
 
-    // Also update admin_email in wp_options
+    // Update admin_email in wp_options as well
     runWpCommand(['option', 'update', 'admin_email', email], siteDir);
 
-    spinner.succeed('Admin credentials updated via WP-CLI.');
-    return;
+    spinner.succeed('Password and email updated via WP-CLI.');
+    wpcliOk = true;
   } catch (err) {
-    const errorMsg = err.message || err.toString();
-    spinner.warn(`WP-CLI failed: ${errorMsg}. Falling back to direct database update...`);
+    spinner.warn(`WP-CLI failed: ${err.message}. Will use MySQL for password/email too.`);
   }
 
-  // Fallback: direct MySQL update
-  const dbSpinner = ora('Updating admin via MySQL...').start();
+  // ── Step 2: Update user_login via MySQL (only supported path for username) ──
+  const dbSpinner = ora('Updating username via MySQL...').start();
   let connection;
   try {
     connection = await createDbConnection(config);
-    await connection.execute(`USE \`${siteName}\``);
+    await connection.execute(`USE \`${dbName}\``);
 
-    // Determine table prefix by reading wp-config.php
-    const prefix = readTablePrefix(siteDir);
-
-    // Update user record (ID = 1)
-    await connection.execute(
-      `UPDATE \`${prefix}users\` SET user_login = ?, user_email = ?, user_pass = MD5(?) WHERE ID = 1`,
-      [username, email, password]
-    );
-
-    // Update admin_email option
-    await connection.execute(
-      `UPDATE \`${prefix}options\` SET option_value = ? WHERE option_name = 'admin_email'`,
-      [email]
-    );
-
-    dbSpinner.succeed('Admin credentials updated via MySQL.');
+    if (!wpcliOk) {
+      // Full fallback: update everything via MySQL.
+      // MD5 is accepted as a legacy password format; WordPress upgrades it on next login.
+      await connection.execute(
+        `UPDATE \`${prefix}users\` SET user_login = ?, user_email = ?, user_pass = MD5(?) WHERE ID = ?`,
+        [username, email, password, adminId]
+      );
+      await connection.execute(
+        `UPDATE \`${prefix}options\` SET option_value = ? WHERE option_name = 'admin_email'`,
+        [email]
+      );
+      dbSpinner.succeed('All credentials updated via MySQL.');
+    } else {
+      // WP-CLI handled pass/email — just update user_login here.
+      await connection.execute(
+        `UPDATE \`${prefix}users\` SET user_login = ? WHERE ID = ?`,
+        [username, adminId]
+      );
+      dbSpinner.succeed(`Username updated: ${username}`);
+    }
   } catch (dbErr) {
     dbSpinner.fail(`MySQL update failed: ${dbErr.message}`);
   } finally {
     if (connection) await connection.end();
   }
 }
+
 
 /**
  * Reads $table_prefix from wp-config.php. Defaults to 'wp_'.
@@ -133,6 +179,20 @@ function readTablePrefix(siteDir) {
   const content = fs.readFileSync(wpConfigPath, 'utf-8');
   const match = content.match(/\$table_prefix\s*=\s*['"]([^'"]+)['"]/);
   return match ? match[1] : 'wp_';
+}
+
+/**
+ * Reads DB_NAME from wp-config.php.
+ * Falls back to siteName (directory name) if not found.
+ * @param {string} siteDir
+ * @param {string} [fallback]
+ */
+function readDbName(siteDir, fallback = '') {
+  const wpConfigPath = path.join(siteDir, 'wp-config.php');
+  if (!fs.existsSync(wpConfigPath)) return fallback;
+  const content = fs.readFileSync(wpConfigPath, 'utf-8');
+  const match = content.match(/define\s*\(\s*['"]DB_NAME['"]\s*,\s*['"]([^'"]+)['"]/);
+  return match ? match[1] : fallback;
 }
 
 // ─── Sub-command 2: Install Theme ────────────────────────────────────────────
