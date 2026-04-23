@@ -53,7 +53,7 @@ npm install -g https://github.com/HungNth/create-wordpress.git
 ### From npm
 
 ```bash
-npm install -g @nth/create-wp
+npm install -g @thienhungdev/create-wp
 ```
 
 > [!NOTE]
