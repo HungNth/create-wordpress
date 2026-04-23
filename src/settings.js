@@ -247,9 +247,11 @@ async function editPlugins(config) {
 
 async function editWpTweaks(config) {
   const TWEAK_TYPE_LABELS = {
-    config_set: 'config_set (wp-config.php constant)',
+    config_set:        'config_set        (wp-config.php constant)',
     rewrite_structure: 'rewrite_structure (permalink)',
-    option_update: 'option_update (wp_options)',
+    option_update:     'option_update     (wp_options)',
+    language_core:     'language_core     (wp language core install/activate)',
+    site:              'site              (wp site — multisite commands)',
   };
 
   const TWEAK_ACTIONS = [
@@ -267,9 +269,11 @@ async function editWpTweaks(config) {
     } else {
       tweaks.forEach((t, i) => {
         let label;
-        if (t.type === 'config_set')        label = `${chalk.yellow('config')}  ${t.key} = ${t.value}${t.raw ? chalk.gray(' --raw') : ''}`;
-        else if (t.type === 'rewrite_structure') label = `${chalk.blue('rewrite')} ${t.value}`;
-        else                                label = `${chalk.cyan('option')}  ${t.key} = ${t.value}`;
+        if      (t.type === 'config_set')        label = `${chalk.yellow('config')}   ${t.key} = ${t.value}${t.raw ? chalk.gray(' --raw') : ''}`;
+        else if (t.type === 'rewrite_structure') label = `${chalk.blue('rewrite')}  ${t.value}`;
+        else if (t.type === 'language_core')     label = `${chalk.magenta('language')} core ${t.key} ${t.value}`;
+        else if (t.type === 'site')              label = `${chalk.green('site')}     ${t.key} ${t.value}`;
+        else                                     label = `${chalk.cyan('option')}   ${t.key} = ${t.value}`;
         console.log(`  ${chalk.gray(String(i + 1).padStart(2))}. ${label}`);
       });
       console.log();
@@ -299,6 +303,7 @@ async function editWpTweaks(config) {
         if (!config.wp_tweaks) config.wp_tweaks = [];
         config.wp_tweaks.push({ type: 'rewrite_structure', value: value.trim() });
         console.log(chalk.green('✔  Added rewrite_structure\n'));
+
       } else if (type === 'config_set') {
         const { key, value, raw } = await inquirer.prompt([
           { type: 'input',   name: 'key',   message: 'Constant name (e.g. WP_DEBUG):' },
@@ -310,6 +315,39 @@ async function editWpTweaks(config) {
           config.wp_tweaks.push({ type: 'config_set', key: key.trim(), value: value.trim(), raw });
           console.log(chalk.green(`✔  Added config_set ${key}\n`));
         }
+
+      } else if (type === 'language_core') {
+        const { key, value } = await inquirer.prompt([
+          {
+            type: 'list',
+            name: 'key',
+            message: 'Action:',
+            choices: [
+              { name: 'install  (download the language pack)', value: 'install' },
+              { name: 'activate (set as active language)',      value: 'activate' },
+              { name: 'update   (update language pack)',        value: 'update' },
+              { name: 'uninstall',                             value: 'uninstall' },
+            ],
+          },
+          { type: 'input', name: 'value', message: 'Language code (e.g. vi, fr_FR, de_DE):', default: 'vi' },
+        ]);
+        if (value) {
+          if (!config.wp_tweaks) config.wp_tweaks = [];
+          config.wp_tweaks.push({ type: 'language_core', key, value: value.trim() });
+          console.log(chalk.green(`✔  Added language_core ${key} ${value}\n`));
+        }
+
+      } else if (type === 'site') {
+        const { key, value } = await inquirer.prompt([
+          { type: 'input', name: 'key',   message: 'wp site sub-command (e.g. empty, switch-language):' },
+          { type: 'input', name: 'value', message: 'Argument / value (leave blank if none):', default: '' },
+        ]);
+        if (key) {
+          if (!config.wp_tweaks) config.wp_tweaks = [];
+          config.wp_tweaks.push({ type: 'site', key: key.trim(), value: value.trim() });
+          console.log(chalk.green(`✔  Added site ${key}\n`));
+        }
+
       } else {
         const { key, value } = await inquirer.prompt([
           { type: 'input', name: 'key',   message: 'Option name (e.g. timezone_string):' },
@@ -329,9 +367,12 @@ async function editWpTweaks(config) {
         name: 'indicesToRemove',
         message: 'Select tweaks to remove:',
         choices: tweaks.map((t, i) => {
-          const label = t.type === 'config_set'        ? `config_set ${t.key} = ${t.value}`
-                      : t.type === 'rewrite_structure' ? `rewrite_structure ${t.value}`
-                      : `option_update ${t.key} = ${t.value}`;
+          const label =
+            t.type === 'config_set'        ? `config_set ${t.key} = ${t.value}${t.raw ? ' --raw' : ''}` :
+            t.type === 'rewrite_structure' ? `rewrite_structure ${t.value}` :
+            t.type === 'language_core'     ? `language_core ${t.key} ${t.value}` :
+            t.type === 'site'              ? `site ${t.key} ${t.value}` :
+                                             `option_update ${t.key} = ${t.value}`;
           return { name: label, value: i };
         }),
         pageSize: 20,

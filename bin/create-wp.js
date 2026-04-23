@@ -2,6 +2,7 @@
 
 import fs from 'fs';
 import path from 'path';
+import { createRequire } from 'module';
 import inquirer from 'inquirer';
 import chalk from 'chalk';
 
@@ -15,6 +16,11 @@ import { resolvePath } from '../src/utils/path.js';
 import { deleteSite, promptAndDeleteSite } from '../src/delete.js';
 import { manageSite } from '../src/manage.js';
 import { editSettings } from '../src/settings.js';
+
+// ─── Package info ────────────────────────────────────────────────────────────
+
+const require = createRequire(import.meta.url);
+const pkg = require('../package.json');
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -129,17 +135,92 @@ async function promptPlugins(config) {
   return selectedSlugs;
 }
 
+// ─── Help ────────────────────────────────────────────────────────────────────
+
+function printHelp() {
+  const b = chalk.bold;
+  const c = chalk.cyan;
+  const g = chalk.gray;
+  const y = chalk.yellow;
+
+  console.log(`
+${b.cyan('create-wp')} ${g(`v${pkg.version}`)}
+${g('WordPress site generator for Laravel Herd')}
+
+${b('USAGE')}
+
+  ${c('create-wp')}                        Create a new WordPress site (interactive)
+  ${c('create-wp --config')}               Configure an existing site
+  ${c('create-wp --settings')}             Edit saved CLI defaults in config.json
+  ${c('create-wp --delete')}               Delete a site (interactive picker)
+  ${c('create-wp --delete')} ${y('<site>')}       Delete a specific site directly
+  ${c('create-wp --version')}              Show installed version
+  ${c('create-wp --help')}                 Show this help message
+
+${b('FLAGS')}
+
+  ${c('--config')}            Open the site management wizard:
+                       ${g('🔐 Change admin credentials')}
+                       ${g('🎨 Install theme')}
+                       ${g('🔌 Install plugins')}
+                       ${g('⚙️  Apply WordPress configuration tweaks')}
+
+  ${c('--settings')}          Edit config.json (websites path, DB, admin
+                       defaults, package server, themes, plugins, tweaks)
+
+  ${c('--delete [site]')}     Remove site directory and drop its database.
+                       Without a site name, shows an interactive checkbox
+                       list of all sites.
+
+  ${c('--version')}, ${c('-v')}      Print the installed version and exit.
+
+  ${c('--help')}, ${c('-h')}         Show this help message and exit.
+
+${b('CONFIG FILE')}
+
+  ${g('~/.config/create-wordpress/config.json')}
+
+  Run ${c('create-wp --settings')} to edit, or open the file manually.
+
+${b('EXAMPLES')}
+
+  ${g('# Create a new site')}
+  create-wp
+
+  ${g('# Apply configured tweaks to an existing site')}
+  create-wp --config
+
+  ${g('# Delete site "my-shop"')}
+  create-wp --delete my-shop
+
+  ${g('# Update package server URL')}
+  create-wp --settings
+`);
+}
+
 // ─── Main ────────────────────────────────────────────────────────────────────
 
 async function main() {
+  // ── Arg parsing ─────────────────────────────────────────────────────────
+  const args = process.argv.slice(2);
+
+  // --version / --help don't need the banner
+  if (args.includes('--version') || args.includes('-v')) {
+    console.log(`${pkg.name} v${pkg.version}`);
+    return;
+  }
+
+  if (args.includes('--help') || args.includes('-h')) {
+    printHelp();
+    return;
+  }
+
   console.log(
     chalk.bold.cyan(
       '\n🚀  create-wp  —  WordPress site generator for Laravel Herd\n'
     )
   );
 
-  // ── Arg parsing ─────────────────────────────────────────────────────────
-  const args = process.argv.slice(2);
   const deleteIndex = args.indexOf('--delete');
   if (deleteIndex !== -1) {
     const siteName = args[deleteIndex + 1];

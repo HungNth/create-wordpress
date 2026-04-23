@@ -61,6 +61,22 @@ npm install -g @thienhungdev/create-wp
 
 ---
 
+## USEFUL COMMANDS
+
+```bash
+create-wp
+create-wp --config
+create-wp --settings
+create-wp --delete
+create-wp --delete my-site-name
+create-wp --version
+create-wp -v
+create-wp --help
+create-wp -h
+```
+
+---
+
 ## Usage
 
 ### Create a new WordPress site
@@ -103,9 +119,37 @@ This is useful when you want to change:
 - default WordPress admin username, password, or email
 - package server URL or API key
 - theme list, default theme, or plugin list
-- `wp_tweaks` used by `create-wp --config`
+- `wp_tweaks` — `config_set`, `rewrite_structure`, `option_update`, `language_core`, `site`
 
 Changes are only written when you choose **Save & Exit**.
+
+---
+
+### Show installed version
+
+```bash
+create-wp --version
+```
+
+```bash
+create-wp -v
+```
+
+Prints the installed package version and exits.
+
+---
+
+### Show full help
+
+```bash
+create-wp --help
+```
+
+```bash
+create-wp -h
+```
+
+Prints the full usage guide and exits.
 
 ---
 
@@ -117,20 +161,22 @@ create-wp --config
 
 Launches the site configuration wizard with 4 options:
 
-| Option                           | Description                                                                                                                                            |
-| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 🔐 Change admin credentials      | Update admin username (via MySQL), password and email (via WP-CLI). Reads `DB_NAME` and `$table_prefix` directly from `wp-config.php`.                 |
-| 🎨 Install theme                 | Pick a theme from your config list and install it on the selected site.                                                                                |
-| 🔌 Install plugins               | Multi-select checkbox to install one or more plugins from your config list.                                                                            |
-| ⚙️ Apply WordPress configuration | Applies each entry in `wp_tweaks` from `config.json` to the selected site via WP-CLI. Supports `config_set`, `rewrite_structure`, and `option_update`. |
+| Option                           | Description                                                                                                                            |
+| -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| 🔐 Change admin credentials      | Update admin username (via MySQL), password and email (via WP-CLI). Reads `DB_NAME` and `$table_prefix` directly from `wp-config.php`. |
+| 🎨 Install theme                 | Pick a theme from your config list and install it on the selected site.                                                                |
+| 🔌 Install plugins               | Multi-select checkbox to install one or more plugins from your config list.                                                            |
+| ⚙️ Apply WordPress configuration | Applies each entry in `wp_tweaks` from `config.json` to the selected site via WP-CLI. Supports all 5 tweak types.                      |
 
 `Apply WordPress configuration` reads the `wp_tweaks` array from `config.json` and runs each tweak in order:
 
-- `config_set` -> `wp config set <KEY> <VALUE>` with optional `--raw`
-- `rewrite_structure` -> `wp rewrite structure <VALUE> --hard`
-- `option_update` -> `wp option update <KEY> <VALUE>`
-- `language_core` -> `wp language core <KEY> <VALUE>`
-- `site` -> `wp site <KEY> <VALUE>`
+| Type                | WP-CLI command                                                               |
+| ------------------- | ---------------------------------------------------------------------------- |
+| `config_set`        | `wp config set <KEY> <VALUE>` (+ `--raw` for booleans / integers)            |
+| `rewrite_structure` | `wp rewrite structure <VALUE> --hard`                                        |
+| `option_update`     | `wp option update <KEY> <VALUE>`                                             |
+| `language_core`     | `wp language core <KEY> <VALUE>` (KEY = `install` \| `activate` \| `update`) |
+| `site`              | `wp site <KEY> <VALUE>` (for multisite sub-commands)                         |
 
 ---
 
@@ -203,7 +249,9 @@ Cache directory:
       "type": "option_update",
       "key": "timezone_string",
       "value": "Asia/Ho_Chi_Minh"
-    }
+    },
+    { "type": "language_core", "key": "install", "value": "vi" },
+    { "type": "language_core", "key": "activate", "value": "vi" }
   ]
 }
 ```

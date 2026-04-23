@@ -64,6 +64,9 @@ const DEFAULT_WP_TWEAKS = [
   { type: 'option_update', key: 'posts_per_rss',         value: '210' },
   { type: 'option_update', key: 'rss_use_excerpt',       value: '1' },
   { type: 'option_update', key: 'avatar_default',        value: 'identicon' },
+  // ── Language ──────────────────────────────────────────────────────────────
+  { type: 'language_core', key: 'install',  value: 'vi' },
+  { type: 'language_core', key: 'activate', value: 'vi' },
 ];
 
 // ─── Migration ─────────────────────────────────────────────────────────────────
