@@ -14,6 +14,7 @@ import { resolvePackage } from '../src/packages.js';
 import { resolvePath } from '../src/utils/path.js';
 import { deleteSite, promptAndDeleteSite } from '../src/delete.js';
 import { manageSite } from '../src/manage.js';
+import { editSettings } from '../src/settings.js';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -155,6 +156,11 @@ async function main() {
   const configIndex = args.indexOf('--config');
   if (configIndex !== -1) {
     await manageSite();
+    return;
+  }
+
+  if (args.includes('--settings')) {
+    await editSettings();
     return;
   }
 
