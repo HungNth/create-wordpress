@@ -152,3 +152,29 @@ export async function installPlugin(sitePath, zipPath, name = 'plugin') {
 export function runWpCommand(args, cwd) {
   return runWp(args, cwd);
 }
+
+/**
+ * Runs a WP-CLI command with piped stdin (for interactive commands that prompt for input).
+ * @param {string[]} args
+ * @param {string}   cwd
+ * @param {string}   input  String written to stdin (e.g. 'y\n' to auto-confirm)
+ * @returns {string} stdout
+ */
+export function runWpCommandWithInput(args, cwd, input) {
+  const resolved = getWpPath();
+  if (!resolved) throw new Error('WP-CLI (wp) not found in PATH.');
+
+  const result = spawnResolved(resolved, args, {
+    cwd,
+    input,
+    stdio: ['pipe', 'pipe', 'pipe'],
+    encoding: 'utf-8',
+  });
+
+  if (result.error || result.status !== 0) {
+    const msg = result.stderr?.trim() || result.stdout?.trim() || `wp ${args[0]} failed`;
+    throw new Error(msg);
+  }
+
+  return result.stdout?.trim() ?? '';
+}

@@ -16,6 +16,8 @@ import { resolvePath } from '../src/utils/path.js';
 import { deleteSite, promptAndDeleteSite } from '../src/delete.js';
 import { manageSite } from '../src/manage.js';
 import { editSettings } from '../src/settings.js';
+import { backupSite } from '../src/backup.js';
+import { restoreSite } from '../src/restore.js';
 
 // ─── Package info ────────────────────────────────────────────────────────────
 
@@ -152,6 +154,8 @@ ${b('USAGE')}
   ${c('create-wp')}                        Create a new WordPress site (interactive)
   ${c('create-wp --config')}               Configure an existing site
   ${c('create-wp --settings')}             Edit saved CLI defaults in config.json
+  ${c('create-wp --backup')}               Backup a site (full zip or AI1WM)
+  ${c('create-wp --restore')}              Restore a site from a backup
   ${c('create-wp --delete')}               Delete a site (interactive picker)
   ${c('create-wp --delete')} ${y('<site>')}       Delete a specific site directly
   ${c('create-wp --version')}              Show installed version
@@ -167,6 +171,15 @@ ${b('FLAGS')}
 
   ${c('--settings')}          Edit config.json (websites path, DB, admin
                        defaults, package server, themes, plugins, tweaks)
+
+  ${c('--backup')}, ${c('-b')}       Backup a site:
+                       ${g('📦 Full source code (zip archive + SQL dump)')}
+                       ${g('🔄 All-in-One WP Migration (.wpress)')}
+                       Saved to: ${g('websitesPath/backups/')}
+
+  ${c('--restore')}, ${c('-r')}      Restore a site from a backup:
+                       ${g('📦 From full source zip')}
+                       ${g('🔄 From .wpress file (AI1WM)')}
 
   ${c('--delete [site]')}     Remove site directory and drop its database.
                        Without a site name, shows an interactive checkbox
@@ -186,6 +199,12 @@ ${b('EXAMPLES')}
 
   ${g('# Create a new site')}
   create-wp
+
+  ${g('# Backup site "my-shop" as full source')}
+  create-wp --backup
+
+  ${g('# Restore from a zip backup')}
+  create-wp --restore
 
   ${g('# Apply configured tweaks to an existing site')}
   create-wp --config
@@ -242,6 +261,16 @@ async function main() {
 
   if (args.includes('--settings')) {
     await editSettings();
+    return;
+  }
+
+  if (args.includes('--backup') || args.includes('-b')) {
+    await backupSite();
+    return;
+  }
+
+  if (args.includes('--restore') || args.includes('-r')) {
+    await restoreSite();
     return;
   }
 

@@ -18,8 +18,8 @@ Instead of manually downloading WordPress, configuring the database, running thr
 
 ## Roadmap
 
-- [ ] Backup website
-- [ ] Restore website
+- [x] Backup website
+- [x] Restore website
 
 ### Key Features
 
@@ -30,6 +30,7 @@ Instead of manually downloading WordPress, configuring the database, running thr
 - **📦 Private Package Server:** Connects to a private update server to download premium themes and plugins.
 - **🛠️ Settings Editor:** Use `--settings` to update the saved CLI defaults in `config.json`.
 - **⚙️ Site Configuration:** Use `--config` to change admin credentials, install themes, add plugins, or apply saved WordPress tweaks to existing sites.
+- **🗄️ Backup & Restore:** Create full-source `.zip` backups or AI1WM `.wpress` backups, then restore them into fresh local sites.
 - **🧹 Easy Cleanup:** Use `--delete` to instantly wipe a site directory and drop its database.
 
 ---
@@ -71,9 +72,13 @@ npm install -g @thienhungdev/create-wp
 ```bash
 create-wp
 create-wp --config
-create-wp --settings
+create-wp --backup
+create-wp -b
+create-wp --restore
+create-wp -r
 create-wp --delete
 create-wp --delete my-site-name
+create-wp --settings
 create-wp --version
 create-wp -v
 create-wp --help
@@ -182,6 +187,61 @@ Launches the site configuration wizard with 4 options:
 | `option_update`     | `wp option update <KEY> <VALUE>`                                             |
 | `language_core`     | `wp language core <KEY> <VALUE>` (KEY = `install` \| `activate` \| `update`) |
 | `site`              | `wp site <KEY> <VALUE>` (for multisite sub-commands)                         |
+
+---
+
+### Backup a website
+
+```bash
+create-wp --backup
+```
+
+```bash
+create-wp -b
+```
+
+Launches an interactive backup wizard:
+
+| Method                    | Output                               | Details                                                                                                                      |
+| ------------------------- | ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------- |
+| `Full source code`        | `full-source_<site>_<timestamp>.zip` | Exports the database to a temporary `.sql`, zips the entire site folder, then removes the loose SQL file from the site root. |
+| `All-in-One WP Migration` | `ai1wm-<site>_<timestamp>.wpress`    | Installs/activates the AI1WM plugin, runs `wp ai1wm backup`, then moves the generated backup into the shared backups folder. |
+
+All backups are saved to:
+
+```bash
+<websites_path>/backups/
+```
+
+The backup picker excludes the `backups` directory itself, so only actual sites are listed.
+
+---
+
+### Restore a website
+
+```bash
+create-wp --restore
+```
+
+```bash
+create-wp -r
+```
+
+Launches an interactive restore wizard with 2 modes:
+
+| Method                                 | Input     | What the CLI does                                                                                                                                                                                   |
+| -------------------------------------- | --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Restore from full source backup`      | `.zip`    | Extracts the archive into a new site directory, creates/reuses the database, updates or creates `wp-config.php`, imports the bundled `.sql`, updates `siteurl` and `home`, then runs `herd secure`. |
+| `Restore from All-in-One WP Migration` | `.wpress` | Creates a fresh WordPress site, installs the AI1WM plugin, copies the `.wpress` file into `wp-content/ai1wm-backups/`, runs `wp ai1wm restore`, then provisions SSL.                                |
+
+For both restore modes:
+
+- you choose a new site name, and it is normalized to kebab-case
+- if the target directory already exists, the CLI asks before overwriting it
+- the restored site is secured with Herd and ends up at `https://<site-name>.test`
+
+> [!IMPORTANT]
+> Restoring from `.wpress` requires the plugin `all-in-one-wp-migration-unlimited-extension` to exist in `config.plugins`. If it is hosted on your private package server, `server_url` and `package_api_key` must also be configured.
 
 ---
 
