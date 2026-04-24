@@ -29,7 +29,7 @@ Instead of manually downloading WordPress, configuring the database, running thr
 - **🔒 Automatic SSL:** Seamless integration with `herd secure` to instantly provision local HTTPS (`https://site-name.test`).
 - **📦 Private Package Server:** Connects to a private update server to download premium themes and plugins.
 - **🛠️ Settings Editor:** Use `--settings` to update the saved CLI defaults in `config.json`.
-- **⚙️ Site Configuration:** Use `--config` to change admin credentials, install themes, add plugins, or apply saved WordPress tweaks to existing sites.
+- **⚙️ Site Configuration:** Use `--config` to change admin credentials, install configured themes/plugins, find packages by slug, or apply saved WordPress tweaks to existing sites.
 - **🗄️ Backup & Restore:** Create full-source `.zip` backups or AI1WM `.wpress` backups, then restore them into fresh local sites.
 - **🧹 Easy Cleanup:** Use `--delete` to instantly wipe a site directory and drop its database.
 
@@ -169,14 +169,15 @@ Prints the full usage guide and exits.
 create-wp --config
 ```
 
-Launches the site configuration wizard with 4 options:
+Launches the site configuration wizard with 5 options:
 
 | Option                           | Description                                                                                                                            |
 | -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
 | 🔐 Change admin credentials      | Update admin username (via MySQL), password and email (via WP-CLI). Reads `DB_NAME` and `$table_prefix` directly from `wp-config.php`. |
+| ⚙️ Apply WordPress configuration | Applies each entry in `wp_tweaks` from `config.json` to the selected site via WP-CLI. Supports all 5 tweak types.                      |
+| 🔍 Find and install package(s) by slug | Enter one or more comma-separated slugs, resolve them from the private package server, and install each package automatically. |
 | 🎨 Install theme                 | Pick a theme from your config list and install it on the selected site.                                                                |
 | 🔌 Install plugins               | Multi-select checkbox to install one or more plugins from your config list.                                                            |
-| ⚙️ Apply WordPress configuration | Applies each entry in `wp_tweaks` from `config.json` to the selected site via WP-CLI. Supports all 5 tweak types.                      |
 
 `Apply WordPress configuration` reads the `wp_tweaks` array from `config.json` and runs each tweak in order:
 
@@ -187,6 +188,19 @@ Launches the site configuration wizard with 4 options:
 | `option_update`     | `wp option update <KEY> <VALUE>`                                             |
 | `language_core`     | `wp language core <KEY> <VALUE>` (KEY = `install` \| `activate` \| `update`) |
 | `site`              | `wp site <KEY> <VALUE>` (for multisite sub-commands)                         |
+
+`Find and install package(s) by slug` lets you install packages that are available on your private package server but are not necessarily saved in the local `themes` or `plugins` lists.
+
+Example input:
+
+```text
+flatsome, advanced-custom-fields-pro, wp-rocket
+```
+
+For each slug, the CLI fetches metadata from the package server, downloads or reuses the cached ZIP, then tries to install it as a plugin first. If plugin installation fails, it falls back to installing it as a theme. A result summary is printed after all slugs are processed.
+
+> [!IMPORTANT]
+> `Find and install package(s) by slug` requires both `server_url` and `package_api_key` in `config.json`.
 
 ---
 

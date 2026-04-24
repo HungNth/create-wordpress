@@ -350,13 +350,100 @@ async function applyWpTweaks(siteName, siteDir, config) {
 	}
 }
 
+// ─── Sub-command 5: Install package(s) by slug ────────────────────────────
+
+/**
+ * Attempts to install a zip as a plugin, then as a theme.
+ * Returns 'plugin' | 'theme' on success, throws on total failure.
+ */
+function installZip(zipPath, siteDir) {
+  try {
+    runWpCommand(['plugin', 'install', zipPath, '--activate', '--force'], siteDir);
+    return 'plugin';
+  } catch {}
+  // Fallback: try as theme
+  runWpCommand(['theme', 'install', zipPath, '--activate', '--force'], siteDir);
+  return 'theme';
+}
+
+async function installBySlugFlow(siteName, siteDir, config) {
+  if (!config.server_url || !config.package_api_key) {
+    console.log(chalk.yellow('⚠  server_url / package_api_key not set — cannot install packages.\n'));
+    return;
+  }
+
+  const { rawSlugs } = await inquirer.prompt([{
+    type: 'input',
+    name: 'rawSlugs',
+    message: 'Enter the slug(s) to find and install (comma-separated):',
+    validate: (v) => (v.trim() ? true : 'Please enter at least one slug.'),
+  }]);
+
+  const slugs = rawSlugs
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  if (!slugs.length) return;
+
+  console.log(chalk.bold(`\n📦  Processing ${slugs.length} slug(s) for "${siteName}"\n`));
+
+  // status: 'ok' | 'not_found' | 'failed'
+  const results = [];
+
+  for (const slug of slugs) {
+    // 1. Resolve package (fetch metadata + download/cache)
+    let zipPath;
+    try {
+      zipPath = await resolvePackage(config.server_url, slug, config.package_api_key);
+    } catch (err) {
+      console.log(chalk.yellow(`  ≈  Not found: ${chalk.bold(slug)} — ${err.message}`));
+      results.push({ slug, status: 'not_found', detail: err.message });
+      continue;
+    }
+
+    // 2. Install (plugin then theme fallback)
+    const installSpinner = ora(`Installing: ${slug}`).start();
+    try {
+      const kind = installZip(zipPath, siteDir);
+      installSpinner.succeed(`Installed as ${kind}: ${slug}`);
+      results.push({ slug, status: 'ok', detail: kind });
+    } catch (err) {
+      installSpinner.fail(`Install failed: ${slug}`);
+      results.push({ slug, status: 'failed', detail: err.message });
+    }
+  }
+
+  // 3. Summary table
+  const colW = Math.max(...results.map((r) => r.slug.length), 4);
+  console.log(chalk.bold('\n📋  Result summary\n'));
+  console.log(
+    chalk.gray('  ' + 'Slug'.padEnd(colW + 2) + 'Status      ' + 'Detail')
+  );
+  console.log(chalk.gray('  ' + '─'.repeat(colW + 30)));
+  for (const r of results) {
+    const icon        = r.status === 'ok' ? chalk.green('✔') : r.status === 'not_found' ? chalk.yellow('≈') : chalk.red('✖');
+    const statusLabel = r.status === 'ok' ? chalk.green('Installed ') : r.status === 'not_found' ? chalk.yellow('Not found ') : chalk.red('Failed    ');
+    const detail      = r.status === 'ok' ? chalk.gray(`(${r.detail})`) : chalk.gray(r.detail?.slice(0, 60) || '');
+    console.log(`  ${icon}  ${r.slug.padEnd(colW + 2)}${statusLabel} ${detail}`);
+  }
+  const ok = results.filter((r) => r.status === 'ok').length;
+  console.log();
+  if (ok === results.length) {
+    console.log(chalk.green(`✔  All ${ok} package(s) installed.\n`));
+  } else {
+    console.log(chalk.yellow(`⚠  ${ok} / ${results.length} installed successfully.\n`));
+  }
+}
+
 // ─── Main entry ──────────────────────────────────────────────────────────────
 
 const ACTIONS = [
-	{ name: '🔐  Change admin credentials', value: 'admin' },
-	{ name: '🎨  Install theme', value: 'theme' },
-	{ name: '🔌  Install plugins', value: 'plugins' },
-	{ name: '⚙️  Apply WordPress configuration', value: 'tweaks' },
+	{ name: '🔐  Change admin credentials',          value: 'admin'   },
+	{ name: '⚙️  Apply WordPress configuration',     value: 'tweaks'  },
+	{ name: '🔍  Find and install package(s) by slug', value: 'slug'    },
+	{ name: '🎨  Install theme',                     value: 'theme'   },
+	{ name: '🔌  Install plugins',                   value: 'plugins' },
 ];
 
 /**
@@ -389,6 +476,9 @@ export async function manageSite() {
 			break;
 		case 'tweaks':
 			await applyWpTweaks(siteName, siteDir, config);
+			break;
+		case 'slug':
+			await installBySlugFlow(siteName, siteDir, config);
 			break;
 	}
 }
