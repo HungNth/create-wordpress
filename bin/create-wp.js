@@ -18,6 +18,7 @@ import { manageSite } from '../src/manage.js';
 import { editSettings } from '../src/settings.js';
 import { backupSite } from '../src/backup.js';
 import { restoreSite } from '../src/restore.js';
+import { applyWpTweaks } from '../src/wp-tweaks.js';
 
 // ─── Package info ────────────────────────────────────────────────────────────
 
@@ -408,7 +409,23 @@ async function main() {
     }
   }
 
-  // ── Step 10: herd secure ──────────────────────────────────────────────────
+  // ── Step 10: Apply WordPress tweaks ───────────────────────────────────────
+  if (Array.isArray(config.wp_tweaks) && config.wp_tweaks.length > 0) {
+    const { shouldApplyTweaks } = await inquirer.prompt([
+      {
+        type: 'confirm',
+        name: 'shouldApplyTweaks',
+        message: `Apply ${config.wp_tweaks.length} WordPress configuration tweak(s) now?`,
+        default: true,
+      },
+    ]);
+
+    if (shouldApplyTweaks) {
+      await applyWpTweaks(siteName, siteDir, config);
+    }
+  }
+
+  // ── Step 11: herd secure ──────────────────────────────────────────────────
   try {
     await secureWithHerd(siteName);
     console.log();
