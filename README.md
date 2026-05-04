@@ -224,7 +224,7 @@ Launches an interactive backup wizard:
 
 | Method                    | Output                               | Details                                                                                                                      |
 | ------------------------- | ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------- |
-| `Full source code`        | `full-source_<site>_<timestamp>.zip` | Exports the database to a temporary `.sql`, zips the entire site folder, then removes the loose SQL file from the site root. |
+| `Full source code`        | `full-source_<site>_<timestamp>.zip` | Exports the database to a temporary `.sql`, zips the site folder, excludes `.idea`, `.vscode`, `node_modules`, and `__MACOSX`, then removes the loose SQL file from the site root. |
 | `All-in-One WP Migration` | `ai1wm-<site>_<timestamp>.wpress`    | Installs/activates the AI1WM plugin, runs `wp ai1wm backup`, then moves the generated backup into the shared backups folder. |
 
 All backups are saved to:

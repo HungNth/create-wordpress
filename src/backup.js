@@ -59,6 +59,32 @@ async function pickSite(websitesPath) {
 
 // ─── Backup Method 1: Full source code ───────────────────────────────────────
 
+const FULL_SOURCE_BACKUP_EXCLUDES = new Set([
+  '.idea',
+  '.vscode',
+  'node_modules',
+  '__MACOSX',
+]);
+
+function addFolderToZip(zip, sourceDir, zipRoot = '') {
+  const entries = fs.readdirSync(sourceDir, { withFileTypes: true });
+
+  for (const entry of entries) {
+    if (entry.isDirectory() && FULL_SOURCE_BACKUP_EXCLUDES.has(entry.name)) {
+      continue;
+    }
+
+    const fullPath = path.join(sourceDir, entry.name);
+    const zipPath = zipRoot ? `${zipRoot}/${entry.name}` : entry.name;
+
+    if (entry.isDirectory()) {
+      addFolderToZip(zip, fullPath, zipPath);
+    } else if (entry.isFile()) {
+      zip.addLocalFile(fullPath, zipRoot);
+    }
+  }
+}
+
 async function backupFullSource(siteName, siteDir, backupsDir) {
   const ts          = makeTimestamp();
   const sqlFileName = `${siteName}_${ts}.sql`;
@@ -80,7 +106,7 @@ async function backupFullSource(siteName, siteDir, backupsDir) {
   spinner = ora(`Compressing "${siteName}"… (may take a while for large sites)`).start();
   try {
     const zip = new AdmZip();
-    zip.addLocalFolder(siteDir);
+    addFolderToZip(zip, siteDir);
     zip.writeZip(zipPath);
     spinner.succeed(`Archive created: ${zipName}`);
   } catch (err) {
