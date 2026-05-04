@@ -45,7 +45,9 @@ async function installAi1wmPlugin(siteDir, config) {
  * Provisions an SSL cert via `herd secure`. Non-interactive (stdio: pipe).
  * Logs a warning but does not abort if herd fails.
  */
-async function provisionSsl(siteName) {
+async function provisionSsl(siteName, config) {
+	if (config.use_herd === false) return;
+
 	const spinner = ora(`Securing with Herd SSL: ${siteName}.test…`).start();
 	try {
 		await secureWithHerd(siteName);
@@ -197,7 +199,7 @@ async function restoreFromFullSource(config, websitesPath) {
 	}
 
 	// 7. Provision SSL — non-interactive, pipe only
-	await provisionSsl(siteName);
+	await provisionSsl(siteName, config);
 
 	console.log(chalk.green(`\n\u2714  Restore complete \u2192 https://${siteName}.test/wp-admin/\n`));
 }
@@ -328,7 +330,7 @@ async function restoreFromAi1wm(config, websitesPath) {
 	}
 
 	// 9. Provision SSL — non-interactive
-	await provisionSsl(siteName);
+	await provisionSsl(siteName, config);
 
 	console.log(chalk.green(`\n✔  Restore complete → https://${siteName}.test/wp-admin/\n`));
 }

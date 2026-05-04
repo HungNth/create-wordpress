@@ -426,12 +426,14 @@ async function main() {
   }
 
   // ── Step 11: herd secure ──────────────────────────────────────────────────
-  try {
-    await secureWithHerd(siteName);
-    console.log();
-  } catch (err) {
-    console.log(chalk.yellow(`\n⚠  ${err.message}`));
-    console.log(chalk.yellow(`   Run manually: herd secure ${siteName}\n`));
+  if (config.use_herd !== false) {
+    try {
+      await secureWithHerd(siteName);
+      console.log();
+    } catch (err) {
+      console.log(chalk.yellow(`\n⚠  ${err.message}`));
+      console.log(chalk.yellow(`   Run manually: herd secure ${siteName}\n`));
+    }
   }
 
   // ── Done! ─────────────────────────────────────────────────────────────────

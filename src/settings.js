@@ -28,6 +28,12 @@ function saveConfig(config) {
 async function editGeneral(config) {
   const answers = await inquirer.prompt([
     {
+      type: 'confirm',
+      name: 'use_herd',
+      message: 'Use Laravel Herd integration?',
+      default: config.use_herd !== false,
+    },
+    {
       type: 'input',
       name: 'websites_path',
       message: 'WordPress sites path:',
@@ -388,7 +394,7 @@ async function editWpTweaks(config) {
 // ─── Main menu ────────────────────────────────────────────────────────────────
 
 const SETTINGS_SECTIONS = [
-  { name: '📁  General          (websites path)', value: 'general' },
+  { name: '📁  General          (Herd integration, websites path)', value: 'general' },
   { name: '🗄️  Database         (host, port, credentials)', value: 'database' },
   { name: '🔑  WordPress        (default admin credentials)', value: 'wp' },
   { name: '📦  Package Server   (URL, API key)', value: 'server' },
