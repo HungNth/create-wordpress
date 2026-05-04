@@ -7,11 +7,11 @@ import { getConfigDir, getConfigFilePath } from './utils/path.js';
 
 const DEFAULT_THEMES = [
   { name: 'Flatsome', slug: 'flatsome' },
-  { name: 'Jannah', slug: 'jannah' },
-  { name: 'Avada', slug: 'Avada' },
-  { name: 'Woodmart', slug: 'woodmart' },
   { name: 'Bricks', slug: 'bricks' },
   { name: 'Etch Theme', slug: 'etch-theme' },
+  { name: 'Woodmart', slug: 'woodmart' },
+  { name: 'Jannah', slug: 'jannah' },
+  { name: 'Avada', slug: 'Avada' },
 ];
 
 const DEFAULT_PLUGINS = [
@@ -22,6 +22,7 @@ const DEFAULT_PLUGINS = [
   { name: 'WP Mail SMTP Pro', slug: 'wp-mail-smtp-pro' },
   { name: 'Admin and Site Enhancements (ASE) Pro', slug: 'admin-site-enhancements-pro' },
   { name: 'WP Rocket', slug: 'wp-rocket' },
+  { name: 'Perfmatters', slug: 'perfmatters' },
   { name: 'Duplicator Pro', slug: 'duplicator-pro' },
   { name: 'Elementor Pro', slug: 'elementor-pro' },
   { name: 'FluentCart Pro', slug: 'fluent-cart-pro' },
@@ -31,7 +32,6 @@ const DEFAULT_PLUGINS = [
   { name: 'GP Premium', slug: 'gp-premium' },
   { name: 'GenerateBlocks Pro', slug: 'generateblocks-pro' },
   { name: 'Tocer', slug: 'tocer' },
-  { name: 'Perfmatters', slug: 'perfmatters' },
 ];
 
 const DEFAULT_WP_TWEAKS = [
@@ -209,11 +209,11 @@ async function createConfig() {
     default_theme_slug: 'flatsome',
     themes: [
       { name: 'Flatsome', slug: 'flatsome' },
-      { name: 'Jannah', slug: 'jannah' },
-      { name: 'Avada', slug: 'Avada' },
-      { name: 'Woodmart', slug: 'woodmart' },
       { name: 'Bricks', slug: 'bricks' },
       { name: 'Etch Theme', slug: 'etch-theme' },
+      { name: 'Woodmart', slug: 'woodmart' },
+      { name: 'Avada', slug: 'Avada' },
+      { name: 'Jannah', slug: 'jannah' },
     ],
     plugins: [
       { name: 'Advanced Custom Fields PRO', slug: 'advanced-custom-fields-pro' },
@@ -223,6 +223,7 @@ async function createConfig() {
       { name: 'WP Mail SMTP Pro', slug: 'wp-mail-smtp-pro' },
       { name: 'Admin and Site Enhancements (ASE) Pro', slug: 'admin-site-enhancements-pro' },
       { name: 'WP Rocket', slug: 'wp-rocket' },
+      { name: 'Perfmatters', slug: 'perfmatters' },
       { name: 'Duplicator Pro', slug: 'duplicator-pro' },
       { name: 'Elementor Pro', slug: 'elementor-pro' },
       { name: 'FluentCart Pro', slug: 'fluent-cart-pro' },
@@ -232,7 +233,6 @@ async function createConfig() {
       { name: 'GP Premium', slug: 'gp-premium' },
       { name: 'GenerateBlocks Pro', slug: 'generateblocks-pro' },
       { name: 'Tocer', slug: 'tocer' },
-      { name: 'Perfmatters', slug: 'perfmatters' },
     ],
     wp_tweaks: DEFAULT_WP_TWEAKS,
   };
