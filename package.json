@@ -4,7 +4,7 @@
   "description": "CLI tool to scaffold WordPress sites with Laravel Herd",
   "type": "module",
   "bin": {
-    "create-wp": "./bin/create-wp.js"
+    "create-wp": "bin/create-wp.js"
   },
   "scripts": {
     "test": "node --check bin/create-wp.js && node --check src/config.js && node --check src/db.js && node --check src/delete.js && node --check src/herd.js && node --check src/manage.js && node --check src/packages.js && node --check src/settings.js && node --check src/wordpress.js && node --check src/wpcli.js && node --check src/wp-tweaks.js && node --check src/utils/path.js && node --check src/utils/which.js",
