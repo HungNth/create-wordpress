@@ -148,7 +148,7 @@ function printHelp() {
 
   console.log(`
 ${b.cyan('create-wp')} ${g(`v${pkg.version}`)}
-${g('WordPress site generator for Laravel Herd')}
+${g('Local WordPress site manager with optional Laravel Herd integration')}
 
 ${b('USAGE')}
 
@@ -166,12 +166,14 @@ ${b('FLAGS')}
 
   ${c('--config')}            Open the site management wizard:
                        ${g('🔐 Change admin credentials')}
+                       ${g('⚙️  Apply WordPress configuration tweaks')}
+                       ${g('🔍 Find and install package(s) by slug')}
                        ${g('🎨 Install theme')}
                        ${g('🔌 Install plugins')}
-                       ${g('⚙️  Apply WordPress configuration tweaks')}
 
   ${c('--settings')}          Edit config.json (websites path, DB, admin
-                       defaults, package server, themes, plugins, tweaks)
+                       defaults, Herd integration, package server,
+                       themes, plugins, tweaks)
 
   ${c('--backup')}, ${c('-b')}       Backup a site:
                        ${g('📦 Full source code (zip archive + SQL dump)')}
@@ -237,7 +239,7 @@ async function main() {
 
   console.log(
     chalk.bold.cyan(
-      '\n🚀  create-wp  —  WordPress site generator for Laravel Herd\n'
+      '\n🚀  create-wp  —  Local WordPress site manager\n'
     )
   );
 

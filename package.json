@@ -1,7 +1,7 @@
 {
   "name": "@thienhungdev/create-wp",
   "version": "1.0.7",
-  "description": "CLI tool to scaffold WordPress sites with Laravel Herd",
+  "description": "CLI tool to scaffold and manage local WordPress sites with optional Laravel Herd integration",
   "type": "module",
   "bin": {
     "create-wp": "bin/create-wp.js"
@@ -19,8 +19,11 @@
   "keywords": [
     "wordpress",
     "laravel-herd",
+    "local-wordpress",
     "cli",
     "scaffold",
+    "backup",
+    "restore",
     "wp-cli"
   ],
   "files": [
