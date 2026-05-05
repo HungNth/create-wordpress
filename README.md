@@ -30,7 +30,7 @@ Instead of manually downloading WordPress, configuring the database, running thr
 - **📦 Private Package Server:** Connects to a private update server to download premium themes and plugins.
 - **🛠️ Settings Editor:** Use `--settings` to update the saved CLI defaults in `config.json`.
 - **⚙️ Site Configuration:** Use `--config` to change admin credentials, install configured themes/plugins, find packages by slug, or apply saved WordPress tweaks to existing sites.
-- **🗄️ Backup & Restore:** Create full-source `.zip` backups or AI1WM `.wpress` backups, then restore them into fresh local sites.
+- **🗄️ Backup & Restore:** Create full-source `.zip` backups or AI1WM `.wpress` backups, then restore from `.zip`, `.wpress`, or a `wp-content/` folder plus SQL dump.
 - **🧹 Easy Cleanup:** Use `--delete` to instantly wipe a site directory and drop its database.
 
 ---
@@ -76,17 +76,12 @@ npm install -g @thienhungdev/create-wp
 ```bash
 create-wp
 create-wp --config
-create-wp --backup
-create-wp -b
-create-wp --restore
-create-wp -r
-create-wp --delete
-create-wp --delete my-site-name
+create-wp --backup (-b)
+create-wp --restore (-r)
+create-wp --delete <my-site-name>
 create-wp --settings
-create-wp --version
-create-wp -v
-create-wp --help
-create-wp -h
+create-wp --version (-v)
+create-wp --help (-h)
 ```
 
 ---
@@ -247,18 +242,21 @@ create-wp --restore
 create-wp -r
 ```
 
-Launches an interactive restore wizard with 2 modes:
+Launches an interactive restore wizard with 3 modes:
 
 | Method                                 | Input     | What the CLI does                                                                                                                                                                                   |
 | -------------------------------------- | --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `Restore from full source backup`      | `.zip`    | Extracts the archive into a new site directory, creates/reuses the database, updates or creates `wp-config.php`, imports the bundled `.sql`, updates `siteurl` and `home`, then runs `herd secure` when Herd is enabled. |
 | `Restore from All-in-One WP Migration` | `.wpress` | Creates a fresh WordPress site, installs the AI1WM plugin, copies the `.wpress` file into `wp-content/ai1wm-backups/`, runs `wp ai1wm restore`, then provisions SSL when Herd is enabled.                                |
+| `Restore from wp-content folder`        | `wp-content/` + `.sql` | Creates a fresh WordPress site, replaces the generated `wp-content` with your provided folder, imports the SQL dump directly via `mysql2`, syncs the detected table prefix, updates `siteurl` and `home`, then provisions SSL when Herd is enabled. |
 
-For both restore modes:
+For all restore modes:
 
 - you choose a new site name, and it is normalized to kebab-case
 - if the target directory already exists, the CLI asks before overwriting it
 - when `use_herd` is enabled, the restored site is secured with Herd and ends up at `https://<site-name>.test`
+
+For `Restore from wp-content folder`, the folder path must point to a directory named exactly `wp-content`. The copy process skips Windows shortcut files, symlinks, and directories listed in `wp_content_copy_excludes`.
 
 > [!IMPORTANT]
 > Restoring from `.wpress` requires the plugin `all-in-one-wp-migration-unlimited-extension` to exist in `config.plugins`. If it is hosted on your private package server, `server_url` and `package_api_key` must also be configured.
@@ -317,6 +315,14 @@ Cache directory:
   "db_username": "root",
   "db_password": "",
   "default_theme_slug": "flatsome",
+  "backup_excludes": [".idea", ".vscode", "node_modules", "__MACOSX"],
+  "wp_content_copy_excludes": [
+    ".idea",
+    ".vscode",
+    "__MACOSX",
+    "node_modules",
+    "cache"
+  ],
   "themes": [
     { "name": "Flatsome", "slug": "flatsome" },
     { "name": "Bricks", "slug": "bricks" }
@@ -348,6 +354,9 @@ Cache directory:
 > [!NOTE]
 > Set `"use_herd": false` if you do not use Laravel Herd. The CLI will still create, configure, backup, restore, and delete WordPress sites, but it will not run `herd secure`.
 
+> [!NOTE]
+> `backup_excludes` controls directories skipped by full-source backups. `wp_content_copy_excludes` controls directories skipped when restoring from a `wp-content/` folder.
+
 ---
 
 ## Architecture
@@ -355,6 +364,7 @@ Cache directory:
 - **Unified config path:** On both macOS and Windows, configuration is stored in `~/.config/create-wordpress/config.json`.
 - **Smart caching:** WordPress core ZIPs live in `~/.config/create-wordpress/cache/wordpress-core/`, theme and plugin ZIPs live in `~/.config/create-wordpress/cache/packages/`, and versions are tracked in `~/.config/create-wordpress/data.json`.
 - **Optional Herd integration:** `use_herd` controls whether the CLI runs Herd-specific SSL provisioning. Existing configs are migrated to `use_herd: true` to preserve the original default behavior.
+- **Restore from wp-content:** The restore flow can rebuild a fresh WordPress core, copy a supplied `wp-content/` folder, import a `.sql` dump with `mysql2`, detect the imported table prefix, and update local URLs.
 - **Cross-platform binary resolution:** On Windows, WP-CLI may resolve as `wp.bat`. The tool detects `.bat`/`.cmd` extensions and routes via `cmd.exe /c` to avoid the Node.js `DEP0190` shell warning.
 - **Admin ID resolution:** When changing admin credentials, the tool runs `wp user list --field=ID --number=1` to find the real admin user ID (which may not be `1`), falling back to a direct MySQL query if WP-CLI is unavailable.
 - **DB name from config:** `DB_NAME` and `$table_prefix` are parsed directly from the site's `wp-config.php`, so the tool works correctly with existing sites that have a different directory name vs. database name.
