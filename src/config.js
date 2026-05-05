@@ -70,6 +70,23 @@ const DEFAULT_WP_TWEAKS = [
 	{ type: 'language_core', key: 'activate', value: 'vi' },
 ];
 
+// Directories excluded when creating a full source backup zip
+const DEFAULT_BACKUP_EXCLUDES = [
+	'.idea',
+	'.vscode',
+	'node_modules',
+	'__MACOSX',
+];
+
+// Directories excluded when copying wp-content during restore-from-folder
+const DEFAULT_WP_CONTENT_COPY_EXCLUDES = [
+	'.idea',
+	'.vscode',
+	'__MACOSX',
+	'node_modules',
+	'cache',
+];
+
 // ─── Migration ─────────────────────────────────────────────────────────────────
 
 /**
@@ -97,6 +114,14 @@ function migrateConfig(config) {
 	}
 	if (!config.wp_tweaks || !Array.isArray(config.wp_tweaks)) {
 		config.wp_tweaks = DEFAULT_WP_TWEAKS;
+		changed = true;
+	}
+	if (!config.backup_excludes || !Array.isArray(config.backup_excludes)) {
+		config.backup_excludes = DEFAULT_BACKUP_EXCLUDES;
+		changed = true;
+	}
+	if (!config.wp_content_copy_excludes || !Array.isArray(config.wp_content_copy_excludes)) {
+		config.wp_content_copy_excludes = DEFAULT_WP_CONTENT_COPY_EXCLUDES;
 		changed = true;
 	}
 
@@ -247,6 +272,8 @@ async function createConfig() {
 			{ name: 'Tocer', slug: 'tocer' },
 		],
 		wp_tweaks: DEFAULT_WP_TWEAKS,
+		backup_excludes: DEFAULT_BACKUP_EXCLUDES,
+		wp_content_copy_excludes: DEFAULT_WP_CONTENT_COPY_EXCLUDES,
 	};
 
 	// Ensure config directory exists

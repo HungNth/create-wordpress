@@ -5,7 +5,7 @@ import path from 'path';
  * Returns the user's home directory, cross-platform.
  */
 export function getHomeDir() {
-  return os.homedir();
+	return os.homedir();
 }
 
 /**
@@ -14,14 +14,14 @@ export function getHomeDir() {
  * On Windows this maps to %USERPROFILE%\.config\create-wordpress
  */
 export function getConfigDir() {
-  return path.join(getHomeDir(), '.config', 'create-wordpress');
+	return path.join(getHomeDir(), '.config', 'create-wordpress');
 }
 
 /**
  * Returns the full path to config.json.
  */
 export function getConfigFilePath() {
-  return path.join(getConfigDir(), 'config.json');
+	return path.join(getConfigDir(), 'config.json');
 }
 
 /**
@@ -29,7 +29,7 @@ export function getConfigFilePath() {
  * ~/.config/create-wordpress/cache
  */
 export function getCacheDir() {
-  return path.join(getConfigDir(), 'cache');
+	return path.join(getConfigDir(), 'cache');
 }
 
 /**
@@ -37,7 +37,7 @@ export function getCacheDir() {
  * ~/.config/create-wordpress/cache/packages
  */
 export function getPackagesCacheDir() {
-  return path.join(getCacheDir(), 'packages');
+	return path.join(getCacheDir(), 'packages');
 }
 
 /**
@@ -45,14 +45,14 @@ export function getPackagesCacheDir() {
  * ~/.config/create-wordpress/cache/wordpress-core
  */
 export function getWordPressCacheDir() {
-  return path.join(getCacheDir(), 'wordpress-core');
+	return path.join(getCacheDir(), 'wordpress-core');
 }
 
 /**
  * Returns the default websites path (~/Herd).
  */
 export function getDefaultWebsitesPath() {
-  return path.join(getHomeDir(), 'Herd');
+	return path.join(getHomeDir(), 'Herd');
 }
 
 /**
@@ -60,9 +60,9 @@ export function getDefaultWebsitesPath() {
  * into an absolute path using the real home directory.
  */
 export function resolvePath(inputPath) {
-  if (!inputPath) return getDefaultWebsitesPath();
-  if (inputPath.startsWith('~/') || inputPath === '~') {
-    return path.join(getHomeDir(), inputPath.slice(2));
-  }
-  return inputPath;
+	if (!inputPath) return getDefaultWebsitesPath();
+	if (inputPath.startsWith('~/') || inputPath === '~') {
+		return path.join(getHomeDir(), inputPath.slice(2));
+	}
+	return inputPath;
 }

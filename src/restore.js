@@ -7,7 +7,7 @@ import ora from 'ora';
 import { loadConfig } from './config.js';
 import { resolvePath } from './utils/path.js';
 import { runWpCommand, runWpCommandWithInput, setupWordPress, installPlugin } from './wpcli.js';
-import { createDbConnection, databaseExists, createDatabase } from './db.js';
+import { createDbConnection, databaseExists, createDatabase, importSqlFile, detectTablePrefix } from './db.js';
 import { downloadAndExtractWordPress } from './wordpress.js';
 import { secureWithHerd } from './herd.js';
 import { resolvePackage } from './packages.js';
@@ -57,6 +57,252 @@ async function provisionSsl(siteName, config) {
 	}
 }
 
+// ─── Restore Method 3: From wp-content folder ───────────────────────────────
+
+/** Directories to skip when copying wp-content */
+// (configured via config.json: wp_content_copy_excludes)
+
+/**
+ * Recursively copy srcDir → destDir.
+ * @param {string}   srcDir
+ * @param {string}   destDir
+ * @param {string[]} excludes  - directory names to skip
+ * @param {number}   maxRetries
+ * @returns {Promise<{src:string,reason:string}[]>}
+ */
+async function copyWpContent(srcDir, destDir, excludes = [], maxRetries = 2) {
+	const excludeSet = new Set(excludes);
+	const failed = [];
+
+	/**
+	 * Copy a single file. Retries up to maxRetries times.
+	 */
+	function copyFile(src, dest) {
+		for (let attempt = 0; attempt <= maxRetries; attempt++) {
+			try {
+				fs.copyFileSync(src, dest);
+				return true;
+			} catch (err) {
+				if (attempt === maxRetries) {
+					failed.push({ src, reason: err.message });
+					return false;
+				}
+			}
+		}
+	}
+
+	/** Walk srcDir recursively */
+	function walk(src, dest) {
+		fs.mkdirSync(dest, { recursive: true });
+
+		let entries;
+		try {
+			entries = fs.readdirSync(src, { withFileTypes: true });
+		} catch (err) {
+			failed.push({ src, reason: `Cannot read directory: ${err.message}` });
+			return;
+		}
+
+		for (const entry of entries) {
+			const srcPath = path.join(src, entry.name);
+			const destPath = path.join(dest, entry.name);
+
+			// Skip Windows shortcuts (.lnk)
+			if (path.extname(entry.name).toLowerCase() === '.lnk') continue;
+
+			// Skip symlinks silently
+			if (entry.isSymbolicLink()) continue;
+
+			if (entry.isDirectory()) {
+				if (excludeSet.has(entry.name)) continue;
+				walk(srcPath, destPath);
+			} else if (entry.isFile()) {
+				copyFile(srcPath, destPath);
+			}
+			// Anything else (block device, etc.) is silently skipped
+		}
+	}
+
+	walk(srcDir, destDir);
+	return failed;
+}
+
+/**
+ * Strip surrounding double or single quotes that Windows adds when
+ * copying a path from Explorer (e.g. "C:\path\file.sql" → C:\path\file.sql).
+ */
+function stripQuotes(str) {
+	return str.trim().replace(/^["']|["']$/g, '');
+}
+
+async function restoreFromWpContent(config, websitesPath) {
+	// 1. Prompt for wp-content path, SQL file, and new site name
+	const { wpContentPath, sqlFilePath, siteName } = await inquirer.prompt([
+		{
+			type: 'input',
+			name: 'wpContentPath',
+			message: 'Full path to the wp-content folder:',
+			filter: (v) => stripQuotes(v),
+			validate: (v) => {
+				const p = stripQuotes(v);
+				if (!p) return 'Path cannot be empty.';
+				if (!fs.existsSync(p)) return `Directory not found: ${p}`;
+				if (!fs.statSync(p).isDirectory()) return `Not a directory: ${p}`;
+				const name = path.basename(p);
+				if (name !== 'wp-content') {
+					return `The folder must be named "wp-content" (got "${name}").`;
+				}
+				return true;
+			},
+		},
+		{
+			type: 'input',
+			name: 'sqlFilePath',
+			message: 'Full path to the .sql database file:',
+			filter: (v) => stripQuotes(v),
+			validate: (v) => {
+				const p = stripQuotes(v);
+				if (!p) return 'Path cannot be empty.';
+				if (!fs.existsSync(p)) return `File not found: ${p}`;
+				if (!fs.statSync(p).isFile()) return `Not a file: ${p}`;
+				if (path.extname(p).toLowerCase() !== '.sql') return 'File must have a .sql extension.';
+				return true;
+			},
+		},
+		{
+			type: 'input',
+			name: 'siteName',
+			message: 'New site name (used as directory & database name):',
+			validate: (v) => (v.trim() ? true : 'Site name cannot be empty.'),
+			filter: (v) =>
+				v.trim().toLowerCase()
+					.replace(/[\s_]+/g, '-')
+					.replace(/[^a-z0-9-]/g, '')
+					.replace(/-+/g, '-')
+					.replace(/^-|-$/g, ''),
+		},
+	]);
+
+	const siteDir = path.join(websitesPath, siteName);
+
+	// 2. Check collision
+	if (fs.existsSync(siteDir)) {
+		const { overwrite } = await inquirer.prompt([{
+			type: 'confirm',
+			name: 'overwrite',
+			message: `Directory "${siteDir}" already exists. Overwrite?`,
+			default: false,
+		}]);
+		if (!overwrite) { console.log(chalk.gray('\n  Restore cancelled.\n')); return; }
+		fs.rmSync(siteDir, { recursive: true, force: true });
+	}
+
+	// 3. Create database
+	let spinner = ora(`Creating database "${siteName}"…`).start();
+	let connection;
+	try {
+		connection = await createDbConnection(config);
+		if (await databaseExists(connection, siteName)) {
+			spinner.warn(`Database "${siteName}" already exists — reusing.`);
+		} else {
+			await createDatabase(connection, siteName);
+			spinner.succeed(`Database "${siteName}" created.`);
+		}
+	} catch (err) {
+		spinner.fail(`Database error: ${err.message}`);
+		return;
+	} finally {
+		if (connection) await connection.end();
+	}
+
+	// 4. Download WordPress core + install
+	spinner = ora('Downloading WordPress core…').start();
+	try {
+		await downloadAndExtractWordPress(siteDir);
+		spinner.succeed('WordPress core ready.');
+	} catch (err) {
+		spinner.fail(`WP download failed: ${err.message}`);
+		return;
+	}
+
+	spinner = ora('Installing WordPress…').start();
+	try {
+		await setupWordPress({ sitePath: siteDir, siteName, config });
+		spinner.succeed('WordPress installed.');
+	} catch (err) {
+		spinner.fail(`WP install failed: ${err.message}`);
+		return;
+	}
+
+	// 5. Replace wp-content with the provided folder
+	const destWpContent = path.join(siteDir, 'wp-content');
+	const copyExcludes = Array.isArray(config.wp_content_copy_excludes)
+		? config.wp_content_copy_excludes
+		: ['.idea', '.vscode', '__MACOSX', 'cache'];
+
+	spinner = ora('Replacing wp-content…').start();
+	try {
+		// Remove the freshly-created wp-content
+		if (fs.existsSync(destWpContent)) {
+			fs.rmSync(destWpContent, { recursive: true, force: true });
+		}
+		spinner.text = 'Copying wp-content (this may take a while)…';
+
+		const failed = await copyWpContent(wpContentPath.trim(), destWpContent, copyExcludes);
+
+		if (failed.length === 0) {
+			spinner.succeed('wp-content copied successfully.');
+		} else {
+			spinner.warn(`wp-content copied with ${failed.length} error(s).`);
+			console.log(chalk.yellow('\n  Files / directories that could not be copied:'));
+			for (const { src, reason } of failed) {
+				console.log(chalk.gray(`    • ${src}`) + chalk.red(` — ${reason}`));
+			}
+			console.log();
+		}
+	} catch (err) {
+		spinner.fail(`wp-content copy failed: ${err.message}`);
+		return;
+	}
+
+	// 6. Import SQL dump directly via mysql2 (drop + recreate DB for a clean slate)
+	const sqlFileName = path.basename(sqlFilePath);
+	spinner = ora(`Importing database (${sqlFileName})…`).start();
+	try {
+		await importSqlFile(sqlFilePath, siteName, config);
+		spinner.succeed('Database imported.');
+	} catch (err) {
+		spinner.fail(`DB import failed: ${err.message}`);
+		// Non-fatal: continue with URL update + SSL
+	}
+
+	// Sync table prefix in wp-config.php with the prefix actually used in the dump
+	spinner = ora('Checking table prefix…').start();
+	try {
+		const detectedPrefix = await detectTablePrefix(siteName, config);
+		runWpCommand(['config', 'set', 'table_prefix', detectedPrefix], siteDir);
+		spinner.succeed(`Table prefix set to "${detectedPrefix}"`);
+	} catch (err) {
+		spinner.warn(`Could not sync table prefix: ${err.message}`);
+	}
+
+	// 7. Update site URL to new local URL
+	const newUrl = `https://${siteName}.test`;
+	spinner = ora('Updating site URL…').start();
+	try {
+		runWpCommand(['option', 'update', 'siteurl', newUrl], siteDir);
+		runWpCommand(['option', 'update', 'home', newUrl], siteDir);
+		spinner.succeed(`Site URL → ${newUrl}`);
+	} catch (err) {
+		spinner.warn(`URL update failed: ${err.message}`);
+	}
+
+	// 8. Provision SSL
+	await provisionSsl(siteName, config);
+
+	console.log(chalk.green(`\n✔  Restore complete → https://${siteName}.test/wp-admin/\n`));
+}
+
 // ─── Restore Method 1: From full source zip ───────────────────────────────────
 
 async function restoreFromFullSource(config, websitesPath) {
@@ -66,8 +312,9 @@ async function restoreFromFullSource(config, websitesPath) {
 			type: 'input',
 			name: 'zipPath',
 			message: 'Path to the backup .zip file:',
+			filter: (v) => stripQuotes(v),
 			validate: (v) => {
-				const p = v.trim();
+				const p = stripQuotes(v);
 				if (!p) return 'Path cannot be empty.';
 				if (!fs.existsSync(p)) return `File not found: ${p}`;
 				if (path.extname(p).toLowerCase() !== '.zip') return 'Must be a .zip archive.';
@@ -169,24 +416,28 @@ async function restoreFromFullSource(config, websitesPath) {
 		console.log(chalk.yellow('\n⚠  No .sql file found in extracted archive — skipping DB import.\n'));
 	} else {
 		const sqlFile = sqlFiles[0];
+		const sqlFilePath = path.join(siteDir, sqlFile);
 		spinner = ora(`Importing database (${sqlFile})…`).start();
 		try {
-			runWpCommand(['db', 'import', sqlFile], siteDir);
+			await importSqlFile(sqlFilePath, siteName, config);
 			spinner.succeed('Database imported.');
 		} catch (err) {
 			spinner.fail(`DB import failed: ${err.message}`);
 		}
 
-		// 7. Offer to update siteurl / home
-		const newUrl = `https://${siteName}.test`;
-		// const { updateUrl } = await inquirer.prompt([{
-		//   type: 'confirm',
-		//   name: 'updateUrl',
-		//   message: `Update site URL to ${newUrl}?`,
-		//   default: true,
-		// }]);
+		// Sync table prefix in wp-config.php with the prefix actually used in the dump
+		spinner = ora('Checking table prefix…').start();
+		try {
+			const detectedPrefix = await detectTablePrefix(siteName, config);
+			runWpCommand(['config', 'set', 'table_prefix', detectedPrefix], siteDir);
+			spinner.succeed(`Table prefix set to "${detectedPrefix}"`);
+		} catch (err) {
+			spinner.warn(`Could not sync table prefix: ${err.message}`);
+		}
 
-		// if (updateUrl) {
+		// Update siteurl / home to new local URL
+		const newUrl = `https://${siteName}.test`;
+
 		spinner = ora('Updating site URL…').start();
 		try {
 			runWpCommand(['option', 'update', 'siteurl', newUrl], siteDir);
@@ -195,7 +446,7 @@ async function restoreFromFullSource(config, websitesPath) {
 		} catch (err) {
 			spinner.warn(`URL update failed: ${err.message}`);
 		}
-		// }
+
 	}
 
 	// 7. Provision SSL — non-interactive, pipe only
@@ -213,8 +464,9 @@ async function restoreFromAi1wm(config, websitesPath) {
 			type: 'input',
 			name: 'wpressPath',
 			message: 'Path to the .wpress backup file:',
+			filter: (v) => stripQuotes(v),
 			validate: (v) => {
-				const p = v.trim();
+				const p = stripQuotes(v);
 				if (!p) return 'Path cannot be empty.';
 				if (!fs.existsSync(p)) return `File not found: ${p}`;
 				return true;
@@ -359,12 +611,15 @@ export async function restoreSite() {
 		choices: [
 			{ name: '📦  Restore from full source backup           (.zip)', value: 'full' },
 			{ name: '🔄  Restore from All-in-One WP Migration    (.wpress)', value: 'ai1wm' },
+			{ name: '📁  Restore from wp-content folder      (wp-content/)', value: 'wpcontent' },
 		],
 	}]);
 
 	if (method === 'full') {
 		await restoreFromFullSource(config, websitesPath);
-	} else {
+	} else if (method === 'ai1wm') {
 		await restoreFromAi1wm(config, websitesPath);
+	} else {
+		await restoreFromWpContent(config, websitesPath);
 	}
 }

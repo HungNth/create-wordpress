@@ -32,13 +32,13 @@ const pkg = require('../package.json');
  * Example: "My Shop" → "my-shop"
  */
 function toKebabCase(str) {
-  return str
-    .trim()
-    .toLowerCase()
-    .replace(/[\s_]+/g, '-')
-    .replace(/[^a-z0-9-]/g, '')
-    .replace(/-+/g, '-')
-    .replace(/^-|-$/g, '');
+	return str
+		.trim()
+		.toLowerCase()
+		.replace(/[\s_]+/g, '-')
+		.replace(/[^a-z0-9-]/g, '')
+		.replace(/-+/g, '-')
+		.replace(/^-|-$/g, '');
 }
 
 /**
@@ -46,41 +46,41 @@ function toKebabCase(str) {
  * and validates no directory/database collision.
  */
 async function promptSiteName(websitesPath, connection) {
-  while (true) {
-    const { rawName } = await inquirer.prompt([
-      {
-        type: 'input',
-        name: 'rawName',
-        message: 'Enter the website name:',
-        validate: (val) => (val.trim() ? true : 'Website name cannot be empty.'),
-      },
-    ]);
+	while (true) {
+		const { rawName } = await inquirer.prompt([
+			{
+				type: 'input',
+				name: 'rawName',
+				message: 'Enter the website name:',
+				validate: (val) => (val.trim() ? true : 'Website name cannot be empty.'),
+			},
+		]);
 
-    const siteName = toKebabCase(rawName);
+		const siteName = toKebabCase(rawName);
 
-    if (!siteName) {
-      console.log(chalk.red('  ✖  Invalid name. Use letters, numbers, or hyphens.\n'));
-      continue;
-    }
+		if (!siteName) {
+			console.log(chalk.red('  ✖  Invalid name. Use letters, numbers, or hyphens.\n'));
+			continue;
+		}
 
-    if (siteName !== rawName.trim()) {
-      console.log(chalk.yellow(`  → Normalised to: ${chalk.bold(siteName)}`));
-    }
+		if (siteName !== rawName.trim()) {
+			console.log(chalk.yellow(`  → Normalised to: ${chalk.bold(siteName)}`));
+		}
 
-    const siteDir = path.join(websitesPath, siteName);
-    if (fs.existsSync(siteDir)) {
-      console.log(chalk.red(`  ✖  Directory already exists: ${siteDir}\n`));
-      continue;
-    }
+		const siteDir = path.join(websitesPath, siteName);
+		if (fs.existsSync(siteDir)) {
+			console.log(chalk.red(`  ✖  Directory already exists: ${siteDir}\n`));
+			continue;
+		}
 
-    const dbExists = await databaseExists(connection, siteName);
-    if (dbExists) {
-      console.log(chalk.red(`  ✖  Database already exists: ${siteName}\n`));
-      continue;
-    }
+		const dbExists = await databaseExists(connection, siteName);
+		if (dbExists) {
+			console.log(chalk.red(`  ✖  Database already exists: ${siteName}\n`));
+			continue;
+		}
 
-    return siteName;
-  }
+		return siteName;
+	}
 }
 
 /**
@@ -88,33 +88,33 @@ async function promptSiteName(websitesPath, connection) {
  * Default is config.default_theme_slug. Returns slug or null to skip.
  */
 async function promptTheme(config) {
-  const themes = config.themes || [];
-  if (!themes.length) return null;
+	const themes = config.themes || [];
+	if (!themes.length) return null;
 
-  const defaultSlug = config.default_theme_slug || themes[0]?.slug;
-  const defaultTheme = themes.find((t) => t.slug === defaultSlug) || themes[0];
+	const defaultSlug = config.default_theme_slug || themes[0]?.slug;
+	const defaultTheme = themes.find((t) => t.slug === defaultSlug) || themes[0];
 
-  const choices = [
-    ...themes.map((t) => ({
-      name: t.slug === defaultSlug ? `${t.name} ${chalk.gray('(default)')}` : t.name,
-      value: t.slug,
-    })),
-    new inquirer.Separator(),
-    { name: 'Skip — no theme', value: null },
-  ];
+	const choices = [
+		...themes.map((t) => ({
+			name: t.slug === defaultSlug ? `${t.name} ${chalk.gray('(default)')}` : t.name,
+			value: t.slug,
+		})),
+		new inquirer.Separator(),
+		{ name: 'Skip — no theme', value: null },
+	];
 
-  const { selectedSlug } = await inquirer.prompt([
-    {
-      type: 'list',
-      name: 'selectedSlug',
-      message: `Select a theme to install:`,
-      default: defaultSlug,
-      choices,
-      pageSize: 12,
-    },
-  ]);
+	const { selectedSlug } = await inquirer.prompt([
+		{
+			type: 'list',
+			name: 'selectedSlug',
+			message: `Select a theme to install:`,
+			default: defaultSlug,
+			choices,
+			pageSize: 12,
+		},
+	]);
 
-  return selectedSlug;
+	return selectedSlug;
 }
 
 /**
@@ -122,31 +122,31 @@ async function promptTheme(config) {
  * Returns array of slugs.
  */
 async function promptPlugins(config) {
-  const plugins = config.plugins || [];
-  if (!plugins.length) return [];
+	const plugins = config.plugins || [];
+	if (!plugins.length) return [];
 
-  const { selectedSlugs } = await inquirer.prompt([
-    {
-      type: 'checkbox',
-      name: 'selectedSlugs',
-      message: 'Select plugins to install (Space = toggle, Enter = confirm):',
-      choices: plugins.map((p) => ({ name: p.name, value: p.slug })),
-      pageSize: 15,
-    },
-  ]);
+	const { selectedSlugs } = await inquirer.prompt([
+		{
+			type: 'checkbox',
+			name: 'selectedSlugs',
+			message: 'Select plugins to install (Space = toggle, Enter = confirm):',
+			choices: plugins.map((p) => ({ name: p.name, value: p.slug })),
+			pageSize: 15,
+		},
+	]);
 
-  return selectedSlugs;
+	return selectedSlugs;
 }
 
 // ─── Help ────────────────────────────────────────────────────────────────────
 
 function printHelp() {
-  const b = chalk.bold;
-  const c = chalk.cyan;
-  const g = chalk.gray;
-  const y = chalk.yellow;
+	const b = chalk.bold;
+	const c = chalk.cyan;
+	const g = chalk.gray;
+	const y = chalk.yellow;
 
-  console.log(`
+	console.log(`
 ${b.cyan('create-wp')} ${g(`v${pkg.version}`)}
 ${g('Local WordPress site manager with optional Laravel Herd integration')}
 
@@ -223,234 +223,234 @@ ${b('EXAMPLES')}
 // ─── Main ────────────────────────────────────────────────────────────────────
 
 async function main() {
-  // ── Arg parsing ─────────────────────────────────────────────────────────
-  const args = process.argv.slice(2);
+	// ── Arg parsing ─────────────────────────────────────────────────────────
+	const args = process.argv.slice(2);
 
-  // --version / --help don't need the banner
-  if (args.includes('--version') || args.includes('-v')) {
-    console.log(`${pkg.name} v${pkg.version}`);
-    return;
-  }
+	// --version / --help don't need the banner
+	if (args.includes('--version') || args.includes('-v')) {
+		console.log(`${pkg.name} v${pkg.version}`);
+		return;
+	}
 
-  if (args.includes('--help') || args.includes('-h')) {
-    printHelp();
-    return;
-  }
+	if (args.includes('--help') || args.includes('-h')) {
+		printHelp();
+		return;
+	}
 
-  console.log(
-    chalk.bold.cyan(
-      '\n🚀  create-wp  —  Local WordPress site manager\n'
-    )
-  );
+	console.log(
+		chalk.bold.cyan(
+			'\n🚀  create-wp  —  Local WordPress site manager\n'
+		)
+	);
 
-  const deleteIndex = args.indexOf('--delete');
-  if (deleteIndex !== -1) {
-    const siteName = args[deleteIndex + 1];
-    if (!siteName) {
-      // No site name given → show interactive picker
-      await promptAndDeleteSite();
-    } else {
-      // Site name given → delete directly
-      await deleteSite(siteName);
-    }
-    return;
-  }
+	const deleteIndex = args.indexOf('--delete');
+	if (deleteIndex !== -1) {
+		const siteName = args[deleteIndex + 1];
+		if (!siteName) {
+			// No site name given → show interactive picker
+			await promptAndDeleteSite();
+		} else {
+			// Site name given → delete directly
+			await deleteSite(siteName);
+		}
+		return;
+	}
 
-  const configIndex = args.indexOf('--config');
-  if (configIndex !== -1) {
-    await manageSite();
-    return;
-  }
+	const configIndex = args.indexOf('--config');
+	if (configIndex !== -1) {
+		await manageSite();
+		return;
+	}
 
-  if (args.includes('--settings')) {
-    await editSettings();
-    return;
-  }
+	if (args.includes('--settings')) {
+		await editSettings();
+		return;
+	}
 
-  if (args.includes('--backup') || args.includes('-b')) {
-    await backupSite();
-    return;
-  }
+	if (args.includes('--backup') || args.includes('-b')) {
+		await backupSite();
+		return;
+	}
 
-  if (args.includes('--restore') || args.includes('-r')) {
-    await restoreSite();
-    return;
-  }
+	if (args.includes('--restore') || args.includes('-r')) {
+		await restoreSite();
+		return;
+	}
 
-  // ── Step 1: Load (or create) config ──────────────────────────────────────
-  let config;
-  try {
-    config = await loadConfig();
-  } catch (err) {
-    console.error(chalk.red(`✖  Failed to load config: ${err.message}`));
-    process.exit(1);
-  }
+	// ── Step 1: Load (or create) config ──────────────────────────────────────
+	let config;
+	try {
+		config = await loadConfig();
+	} catch (err) {
+		console.error(chalk.red(`✖  Failed to load config: ${err.message}`));
+		process.exit(1);
+	}
 
-  const websitesPath = resolvePath(config.websites_path);
+	const websitesPath = resolvePath(config.websites_path);
 
-  if (!fs.existsSync(websitesPath)) {
-    console.log(chalk.yellow(`  ⚠  Websites path does not exist: ${websitesPath}`));
-    console.log(chalk.yellow('     Creating it now...\n'));
-    fs.mkdirSync(websitesPath, { recursive: true });
-  }
+	if (!fs.existsSync(websitesPath)) {
+		console.log(chalk.yellow(`  ⚠  Websites path does not exist: ${websitesPath}`));
+		console.log(chalk.yellow('     Creating it now...\n'));
+		fs.mkdirSync(websitesPath, { recursive: true });
+	}
 
-  // ── Step 2: Connect to MySQL ─────────────────────────────────────────────
-  let connection;
-  try {
-    connection = await createDbConnection(config);
-  } catch (err) {
-    console.error(chalk.red(`\n✖  ${err.message}`));
-    console.log(
-      chalk.yellow('  Check your database settings: ') +
-      chalk.cyan('~/.config/create-wordpress/config.json')
-    );
-    process.exit(1);
-  }
+	// ── Step 2: Connect to MySQL ─────────────────────────────────────────────
+	let connection;
+	try {
+		connection = await createDbConnection(config);
+	} catch (err) {
+		console.error(chalk.red(`\n✖  ${err.message}`));
+		console.log(
+			chalk.yellow('  Check your database settings: ') +
+			chalk.cyan('~/.config/create-wordpress/config.json')
+		);
+		process.exit(1);
+	}
 
-  // ── Step 3: Site name ─────────────────────────────────────────────────────
-  let siteName;
-  try {
-    siteName = await promptSiteName(websitesPath, connection);
-  } catch (err) {
-    console.error(chalk.red(`✖  ${err.message}`));
-    await connection.end();
-    process.exit(1);
-  }
+	// ── Step 3: Site name ─────────────────────────────────────────────────────
+	let siteName;
+	try {
+		siteName = await promptSiteName(websitesPath, connection);
+	} catch (err) {
+		console.error(chalk.red(`✖  ${err.message}`));
+		await connection.end();
+		process.exit(1);
+	}
 
-  // ── Step 4: Theme & plugin selection ─────────────────────────────────────
-  const selectedThemeSlug = await promptTheme(config);
-  const selectedPluginSlugs = await promptPlugins(config);
+	// ── Step 4: Theme & plugin selection ─────────────────────────────────────
+	const selectedThemeSlug = await promptTheme(config);
+	const selectedPluginSlugs = await promptPlugins(config);
 
-  const selectedTheme = selectedThemeSlug
-    ? (config.themes || []).find((t) => t.slug === selectedThemeSlug)
-    : null;
-  const selectedPlugins = selectedPluginSlugs.map(
-    (slug) => (config.plugins || []).find((p) => p.slug === slug)
-  ).filter(Boolean);
+	const selectedTheme = selectedThemeSlug
+		? (config.themes || []).find((t) => t.slug === selectedThemeSlug)
+		: null;
+	const selectedPlugins = selectedPluginSlugs.map(
+		(slug) => (config.plugins || []).find((p) => p.slug === slug)
+	).filter(Boolean);
 
-  // Summary before proceeding
-  console.log();
-  console.log(chalk.bold('  Installation summary:'));
-  console.log(`  Theme:   ${selectedTheme ? chalk.cyan(selectedTheme.name) : chalk.gray('none')}`);
-  if (selectedPlugins.length) {
-    selectedPlugins.forEach((p) => console.log(`  Plugin:  ${chalk.cyan(p.name)}`));
-  } else {
-    console.log(`  Plugins: ${chalk.gray('none')}`);
-  }
-  console.log();
+	// Summary before proceeding
+	console.log();
+	console.log(chalk.bold('  Installation summary:'));
+	console.log(`  Theme:   ${selectedTheme ? chalk.cyan(selectedTheme.name) : chalk.gray('none')}`);
+	if (selectedPlugins.length) {
+		selectedPlugins.forEach((p) => console.log(`  Plugin:  ${chalk.cyan(p.name)}`));
+	} else {
+		console.log(`  Plugins: ${chalk.gray('none')}`);
+	}
+	console.log();
 
-  const siteDir = path.join(websitesPath, siteName);
+	const siteDir = path.join(websitesPath, siteName);
 
-  // ── Step 5: Create directory + database ──────────────────────────────────
-  try {
-    console.log(chalk.cyan(`📁  Creating directory: ${siteDir}`));
-    fs.mkdirSync(siteDir, { recursive: true });
+	// ── Step 5: Create directory + database ──────────────────────────────────
+	try {
+		console.log(chalk.cyan(`📁  Creating directory: ${siteDir}`));
+		fs.mkdirSync(siteDir, { recursive: true });
 
-    console.log(chalk.cyan(`🗄️   Creating database:  ${siteName}`));
-    await createDatabase(connection, siteName);
-    await connection.end();
+		console.log(chalk.cyan(`🗄️   Creating database:  ${siteName}`));
+		await createDatabase(connection, siteName);
+		await connection.end();
 
-    console.log(chalk.green('✔  Directory and database created.\n'));
-  } catch (err) {
-    console.error(chalk.red(`\n✖  ${err.message}`));
-    try { await connection.end(); } catch { /* ignore */ }
-    process.exit(1);
-  }
+		console.log(chalk.green('✔  Directory and database created.\n'));
+	} catch (err) {
+		console.error(chalk.red(`\n✖  ${err.message}`));
+		try { await connection.end(); } catch { /* ignore */ }
+		process.exit(1);
+	}
 
-  // ── Step 6: Download & extract WordPress ─────────────────────────────────
-  try {
-    await downloadAndExtractWordPress(siteDir);
-    console.log();
-  } catch (err) {
-    console.error(chalk.red(`\n✖  ${err.message}`));
-    process.exit(1);
-  }
+	// ── Step 6: Download & extract WordPress ─────────────────────────────────
+	try {
+		await downloadAndExtractWordPress(siteDir);
+		console.log();
+	} catch (err) {
+		console.error(chalk.red(`\n✖  ${err.message}`));
+		process.exit(1);
+	}
 
-  // ── Step 7: WP-CLI core install ───────────────────────────────────────────
-  try {
-    await setupWordPress({ sitePath: siteDir, siteName, config });
-    console.log();
-  } catch (err) {
-    console.error(chalk.red(`\n✖  ${err.message}`));
-    process.exit(1);
-  }
+	// ── Step 7: WP-CLI core install ───────────────────────────────────────────
+	try {
+		await setupWordPress({ sitePath: siteDir, siteName, config });
+		console.log();
+	} catch (err) {
+		console.error(chalk.red(`\n✖  ${err.message}`));
+		process.exit(1);
+	}
 
-  // ── Step 8: Install theme ─────────────────────────────────────────────────
-  const hasPackageServer = config.server_url && config.package_api_key;
+	// ── Step 8: Install theme ─────────────────────────────────────────────────
+	const hasPackageServer = config.server_url && config.package_api_key;
 
-  if (selectedTheme) {
-    if (!hasPackageServer) {
-      console.log(chalk.yellow(`\n⚠  server_url / package_api_key not set — skipping theme install.\n`));
-    } else {
-      try {
-        const zipPath = await resolvePackage(config.server_url, selectedTheme.slug, config.package_api_key);
-        await installTheme(siteDir, zipPath, selectedTheme.name);
-        console.log();
-      } catch (err) {
-        console.error(chalk.red(`\n✖  Theme install failed: ${err.message}`));
-        console.log(chalk.yellow('   Continuing without theme...\n'));
-      }
-    }
-  }
+	if (selectedTheme) {
+		if (!hasPackageServer) {
+			console.log(chalk.yellow(`\n⚠  server_url / package_api_key not set — skipping theme install.\n`));
+		} else {
+			try {
+				const zipPath = await resolvePackage(config.server_url, selectedTheme.slug, config.package_api_key);
+				await installTheme(siteDir, zipPath, selectedTheme.name);
+				console.log();
+			} catch (err) {
+				console.error(chalk.red(`\n✖  Theme install failed: ${err.message}`));
+				console.log(chalk.yellow('   Continuing without theme...\n'));
+			}
+		}
+	}
 
-  // ── Step 9: Install plugins ───────────────────────────────────────────────
-  if (selectedPlugins.length) {
-    if (!hasPackageServer) {
-      console.log(chalk.yellow(`\n⚠  server_url / package_api_key not set — skipping plugin installs.\n`));
-    } else {
-      console.log(chalk.bold(`\n🔌  Installing ${selectedPlugins.length} plugin(s)...\n`));
-      for (const plugin of selectedPlugins) {
-        try {
-          const zipPath = await resolvePackage(config.server_url, plugin.slug, config.package_api_key);
-          await installPlugin(siteDir, zipPath, plugin.name);
-        } catch (err) {
-          console.log(chalk.yellow(`   ⚠  Skipped ${plugin.name}: ${err.message}`));
-        }
-      }
-      console.log();
-    }
-  }
+	// ── Step 9: Install plugins ───────────────────────────────────────────────
+	if (selectedPlugins.length) {
+		if (!hasPackageServer) {
+			console.log(chalk.yellow(`\n⚠  server_url / package_api_key not set — skipping plugin installs.\n`));
+		} else {
+			console.log(chalk.bold(`\n🔌  Installing ${selectedPlugins.length} plugin(s)...\n`));
+			for (const plugin of selectedPlugins) {
+				try {
+					const zipPath = await resolvePackage(config.server_url, plugin.slug, config.package_api_key);
+					await installPlugin(siteDir, zipPath, plugin.name);
+				} catch (err) {
+					console.log(chalk.yellow(`   ⚠  Skipped ${plugin.name}: ${err.message}`));
+				}
+			}
+			console.log();
+		}
+	}
 
-  // ── Step 10: Apply WordPress tweaks ───────────────────────────────────────
-  if (Array.isArray(config.wp_tweaks) && config.wp_tweaks.length > 0) {
-    const { shouldApplyTweaks } = await inquirer.prompt([
-      {
-        type: 'confirm',
-        name: 'shouldApplyTweaks',
-        message: `Apply ${config.wp_tweaks.length} WordPress configuration tweak(s) now?`,
-        default: true,
-      },
-    ]);
+	// ── Step 10: Apply WordPress tweaks ───────────────────────────────────────
+	if (Array.isArray(config.wp_tweaks) && config.wp_tweaks.length > 0) {
+		const { shouldApplyTweaks } = await inquirer.prompt([
+			{
+				type: 'confirm',
+				name: 'shouldApplyTweaks',
+				message: `Apply ${config.wp_tweaks.length} WordPress configuration tweak(s) now?`,
+				default: true,
+			},
+		]);
 
-    if (shouldApplyTweaks) {
-      await applyWpTweaks(siteName, siteDir, config);
-    }
-  }
+		if (shouldApplyTweaks) {
+			await applyWpTweaks(siteName, siteDir, config);
+		}
+	}
 
-  // ── Step 11: herd secure ──────────────────────────────────────────────────
-  if (config.use_herd !== false) {
-    try {
-      await secureWithHerd(siteName);
-      console.log();
-    } catch (err) {
-      console.log(chalk.yellow(`\n⚠  ${err.message}`));
-      console.log(chalk.yellow(`   Run manually: herd secure ${siteName}\n`));
-    }
-  }
+	// ── Step 11: herd secure ──────────────────────────────────────────────────
+	if (config.use_herd !== false) {
+		try {
+			await secureWithHerd(siteName);
+			console.log();
+		} catch (err) {
+			console.log(chalk.yellow(`\n⚠  ${err.message}`));
+			console.log(chalk.yellow(`   Run manually: herd secure ${siteName}\n`));
+		}
+	}
 
-  // ── Done! ─────────────────────────────────────────────────────────────────
-  const hr = chalk.gray('─'.repeat(52));
-  console.log(hr);
-  console.log(chalk.bold.green('  ✅  WordPress site is ready!\n'));
-  console.log(`  📂  Path     ${chalk.cyan(siteDir)}`);
-  console.log(`  🌐  URL      ${chalk.cyan(`https://${siteName}.test`)}`);
-  console.log(`  🔧  Admin    ${chalk.cyan(`https://${siteName}.test/wp-admin`)}`);
-  console.log(`  👤  User     ${chalk.cyan(config.default_admin_username)}`);
-  console.log(`  🔑  Pass     ${chalk.cyan(config.default_admin_password)}`);
-  console.log(hr + '\n');
+	// ── Done! ─────────────────────────────────────────────────────────────────
+	const hr = chalk.gray('─'.repeat(52));
+	console.log(hr);
+	console.log(chalk.bold.green('  ✅  WordPress site is ready!\n'));
+	console.log(`  📂  Path     ${chalk.cyan(siteDir)}`);
+	console.log(`  🌐  URL      ${chalk.cyan(`https://${siteName}.test`)}`);
+	console.log(`  🔧  Admin    ${chalk.cyan(`https://${siteName}.test/wp-admin`)}`);
+	console.log(`  👤  User     ${chalk.cyan(config.default_admin_username)}`);
+	console.log(`  🔑  Pass     ${chalk.cyan(config.default_admin_password)}`);
+	console.log(hr + '\n');
 }
 
 main().catch((err) => {
-  console.error(chalk.red(`\n✖  Unexpected error: ${err.message}`));
-  process.exit(1);
+	console.error(chalk.red(`\n✖  Unexpected error: ${err.message}`));
+	process.exit(1);
 });
