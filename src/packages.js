@@ -42,7 +42,7 @@ function findCachedEntry(slug) {
  * @returns {Promise<{ name, version, download_url, slug, ... }>}
  */
 async function fetchMetadata(serverUrl, slug, apiKey) {
-	const url = `${serverUrl.replace(/\/$/, '')}/${slug}/metadata/license/${apiKey}`;
+	const url = `${serverUrl.replace(/\/$/, '')}/${slug}/metadata?license_key=${apiKey}`;
 	try {
 		const res = await axios.get(url, { timeout: 15000 });
 		return res.data;

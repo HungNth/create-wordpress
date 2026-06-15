@@ -172,13 +172,13 @@ create-wp --config
 
 Launches the site configuration wizard with 5 options:
 
-| Option                           | Description                                                                                                                            |
-| -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| 🔐 Change admin credentials      | Update admin username (via MySQL), password and email (via WP-CLI). Reads `DB_NAME` and `$table_prefix` directly from `wp-config.php`. |
-| ⚙️ Apply WordPress configuration | Applies each entry in `wp_tweaks` from `config.json` to the selected site via WP-CLI. Supports all 5 tweak types.                      |
-| 🔍 Find and install package(s) by slug | Enter one or more comma-separated slugs, resolve them from the private package server, and install each package automatically. |
-| 🎨 Install theme                 | Pick a theme from your config list and install it on the selected site.                                                                |
-| 🔌 Install plugins               | Multi-select checkbox to install one or more plugins from your config list.                                                            |
+| Option                                 | Description                                                                                                                            |
+| -------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| 🔐 Change admin credentials            | Update admin username (via MySQL), password and email (via WP-CLI). Reads `DB_NAME` and `$table_prefix` directly from `wp-config.php`. |
+| ⚙️ Apply WordPress configuration       | Applies each entry in `wp_tweaks` from `config.json` to the selected site via WP-CLI. Supports all 5 tweak types.                      |
+| 🔍 Find and install package(s) by slug | Enter one or more comma-separated slugs, resolve them from the private package server, and install each package automatically.         |
+| 🎨 Install theme                       | Pick a theme from your config list and install it on the selected site.                                                                |
+| 🔌 Install plugins                     | Multi-select checkbox to install one or more plugins from your config list.                                                            |
 
 `Apply WordPress configuration` reads the `wp_tweaks` array from `config.json` and runs each tweak in order:
 
@@ -217,10 +217,10 @@ create-wp -b
 
 Launches an interactive backup wizard:
 
-| Method                    | Output                               | Details                                                                                                                      |
-| ------------------------- | ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------- |
+| Method                    | Output                               | Details                                                                                                                                                                            |
+| ------------------------- | ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `Full source code`        | `full-source_<site>_<timestamp>.zip` | Exports the database to a temporary `.sql`, zips the site folder, excludes `.idea`, `.vscode`, `node_modules`, and `__MACOSX`, then removes the loose SQL file from the site root. |
-| `All-in-One WP Migration` | `ai1wm-<site>_<timestamp>.wpress`    | Installs/activates the AI1WM plugin, runs `wp ai1wm backup`, then moves the generated backup into the shared backups folder. |
+| `All-in-One WP Migration` | `ai1wm-<site>_<timestamp>.wpress`    | Installs/activates the AI1WM plugin, runs `wp ai1wm backup`, then moves the generated backup into the shared backups folder.                                                       |
 
 All backups are saved to:
 
@@ -244,11 +244,11 @@ create-wp -r
 
 Launches an interactive restore wizard with 3 modes:
 
-| Method                                 | Input     | What the CLI does                                                                                                                                                                                   |
-| -------------------------------------- | --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Restore from full source backup`      | `.zip`    | Extracts the archive into a new site directory, creates/reuses the database, updates or creates `wp-config.php`, imports the bundled `.sql`, updates `siteurl` and `home`, then runs `herd secure` when Herd is enabled. |
-| `Restore from All-in-One WP Migration` | `.wpress` | Creates a fresh WordPress site, installs the AI1WM plugin, copies the `.wpress` file into `wp-content/ai1wm-backups/`, runs `wp ai1wm restore`, then provisions SSL when Herd is enabled.                                |
-| `Restore from wp-content folder`        | `wp-content/` + `.sql` | Creates a fresh WordPress site, replaces the generated `wp-content` with your provided folder, imports the SQL dump directly via `mysql2`, syncs the detected table prefix, updates `siteurl` and `home`, then provisions SSL when Herd is enabled. |
+| Method                                 | Input                  | What the CLI does                                                                                                                                                                                                                                   |
+| -------------------------------------- | ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Restore from full source backup`      | `.zip`                 | Extracts the archive into a new site directory, creates/reuses the database, updates or creates `wp-config.php`, imports the bundled `.sql`, updates `siteurl` and `home`, then runs `herd secure` when Herd is enabled.                            |
+| `Restore from All-in-One WP Migration` | `.wpress`              | Creates a fresh WordPress site, installs the AI1WM plugin, copies the `.wpress` file into `wp-content/ai1wm-backups/`, runs `wp ai1wm restore`, then provisions SSL when Herd is enabled.                                                           |
+| `Restore from wp-content folder`       | `wp-content/` + `.sql` | Creates a fresh WordPress site, replaces the generated `wp-content` with your provided folder, imports the SQL dump directly via `mysql2`, syncs the detected table prefix, updates `siteurl` and `home`, then provisions SSL when Herd is enabled. |
 
 For all restore modes:
 
@@ -306,7 +306,7 @@ Cache directory:
 {
   "use_herd": true,
   "websites_path": "F:\\laravel-herd\\wordpress",
-  "server_url": "https://your-private-repo.com/api",
+  "server_url": "https://your-private-repo.com/api/v1/package", // https:://package.example.com/api/v1/package/package_slug?license_key=YOUR_SECRET_KEY
   "package_api_key": "YOUR_SECRET_KEY",
   "default_admin_username": "admin",
   "default_admin_password": "password123",
