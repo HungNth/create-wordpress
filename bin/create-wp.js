@@ -277,6 +277,12 @@ async function main() {
 		return;
 	}
 
+	if (args.length > 0) {
+		console.error(chalk.red(`\n✖  Unknown argument(s): ${args.join(' ')}\n`));
+		printHelp();
+		process.exit(1);
+	}
+
 	// ── Step 1: Load (or create) config ──────────────────────────────────────
 	let config;
 	try {
