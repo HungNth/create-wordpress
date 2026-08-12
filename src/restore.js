@@ -48,12 +48,11 @@ export async function installAi1wmPlugin(siteDir, config) {
 async function provisionSsl(siteName, config) {
 	if (config.use_herd === false) return;
 
-	const spinner = ora(`Securing with Herd SSL: ${siteName}.test…`).start();
 	try {
 		await secureWithHerd(siteName);
-		spinner.succeed(`HTTPS ready \u2192 https://${siteName}.test`);
+		console.log(chalk.green(`✔  HTTPS ready → https://${siteName}.test`));
 	} catch (err) {
-		spinner.warn(`SSL failed (run "herd secure ${siteName}" manually): ${err.message}`);
+		console.log(chalk.yellow(`⚠  SSL failed (run "herd secure ${siteName}" manually): ${err.message}`));
 	}
 }
 
@@ -216,21 +215,19 @@ async function restoreFromWpContent(config, websitesPath) {
 	}
 
 	// 4. Download WordPress core + install
-	spinner = ora('Downloading WordPress core…').start();
 	try {
 		await downloadAndExtractWordPress(siteDir);
-		spinner.succeed('WordPress core ready.');
+		console.log(chalk.green('✔  WordPress core ready.'));
 	} catch (err) {
-		spinner.fail(`WP download failed: ${err.message}`);
+		console.log(chalk.red(`✖  WP download failed: ${err.message}`));
 		return;
 	}
 
-	spinner = ora('Installing WordPress…').start();
 	try {
 		await setupWordPress({ sitePath: siteDir, siteName, config });
-		spinner.succeed('WordPress installed.');
+		console.log(chalk.green('✔  WordPress installed.'));
 	} catch (err) {
-		spinner.fail(`WP install failed: ${err.message}`);
+		console.log(chalk.red(`✖  WP install failed: ${err.message}`));
 		return;
 	}
 
@@ -518,26 +515,24 @@ async function restoreFromAi1wm(config, websitesPath) {
 	}
 
 	// 4. Download WordPress core
-	spinner = ora('Downloading WordPress core…').start();
 	try {
 		await downloadAndExtractWordPress(siteDir);
-		spinner.succeed('WordPress core ready.');
+		console.log(chalk.green('✔  WordPress core ready.'));
 	} catch (err) {
-		spinner.fail(`WP download failed: ${err.message}`);
+		console.log(chalk.red(`✖  WP download failed: ${err.message}`));
 		return;
 	}
 
 	// 5. Create wp-config.php + run core install (minimal — AI1WM will overwrite everything)
-	spinner = ora('Installing WordPress…').start();
 	try {
 		await setupWordPress({
 			sitePath: siteDir,
 			siteName,
 			config,
 		});
-		spinner.succeed('WordPress installed.');
+		console.log(chalk.green('✔  WordPress installed.'));
 	} catch (err) {
-		spinner.fail(`WP install failed: ${err.message}`);
+		console.log(chalk.red(`✖  WP install failed: ${err.message}`));
 		return;
 	}
 
