@@ -7,6 +7,7 @@ import ora from 'ora';
 import { loadConfig } from './config.js';
 import { resolvePath } from './utils/path.js';
 import { runWpCommand } from './wpcli.js';
+import { installAi1wmPlugin } from './restore.js';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -146,16 +147,13 @@ function moveAi1wmFile(srcPath, siteName, ts, backupsDir) {
 	}
 }
 
-async function backupAi1wm(siteName, siteDir, backupsDir) {
+async function backupAi1wm(siteName, siteDir, backupsDir, config) {
 	const ts = makeTimestamp();
 
 	// 1. Install & activate plugin
 	let spinner = ora('Installing All-in-One WP Migration plugin...').start();
 	try {
-		runWpCommand(
-			['plugin', 'install', 'all-in-one-wp-migration-unlimited-extension', '--activate'],
-			siteDir
-		);
+		await installAi1wmPlugin(siteDir, config);
 		spinner.succeed('AI1WM plugin installed & activated.');
 	} catch (err) {
 		spinner.warn(`Plugin install warning (continuing): ${err.message}`);
@@ -232,6 +230,6 @@ export async function backupSite() {
 	if (method === 'full') {
 		await backupFullSource(siteName, siteDir, backupsDir, config);
 	} else {
-		await backupAi1wm(siteName, siteDir, backupsDir);
+		await backupAi1wm(siteName, siteDir, backupsDir, config);
 	}
 }
