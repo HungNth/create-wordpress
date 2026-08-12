@@ -20,7 +20,7 @@ const AI1WM_SLUG = 'all-in-one-wp-migration-unlimited-extension';
  * Installs the AI1WM plugin using the private package server (same path as --config).
  * Throws if the plugin is not in config.plugins or the server is not configured.
  */
-async function installAi1wmPlugin(siteDir, config) {
+export async function installAi1wmPlugin(siteDir, config) {
 	const plugin = (config.plugins || []).find((p) => p.slug === AI1WM_SLUG);
 
 	if (!plugin) {
