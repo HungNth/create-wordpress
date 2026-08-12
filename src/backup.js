@@ -151,16 +151,15 @@ async function backupAi1wm(siteName, siteDir, backupsDir, config) {
 	const ts = makeTimestamp();
 
 	// 1. Install & activate plugin
-	let spinner = ora('Installing All-in-One WP Migration plugin...').start();
 	try {
 		await installAi1wmPlugin(siteDir, config);
-		spinner.succeed('AI1WM plugin installed & activated.');
+		console.log(chalk.green('✔  AI1WM plugin installed & activated.'));
 	} catch (err) {
-		spinner.warn(`Plugin install warning (continuing): ${err.message}`);
+		console.log(chalk.yellow(`⚠  Plugin install warning (continuing): ${err.message}`));
 	}
 
 	// 2. Run backup and capture output
-	spinner = ora('Running AI1WM backup...').start();
+	const spinner = ora('Running AI1WM backup...').start();
 	let output = '';
 	try {
 		output = runWpCommand(
