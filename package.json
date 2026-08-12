@@ -31,12 +31,12 @@
     "src/"
   ],
   "dependencies": {
-    "adm-zip": "^0.5.16",
-    "axios": "^1.7.7",
-    "chalk": "^5.3.0",
-    "inquirer": "^9.3.7",
-    "mysql2": "^3.11.3",
-    "ora": "^8.1.1"
+    "adm-zip": "^0.6.0",
+    "axios": "^1.19.0",
+    "chalk": "^6.0.0",
+    "inquirer": "^14.0.2",
+    "mysql2": "^3.23.3",
+    "ora": "^9.4.1"
   },
   "license": "MIT",
   "author": "Thien Hung",
