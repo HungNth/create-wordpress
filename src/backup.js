@@ -48,7 +48,7 @@ async function pickSite(websitesPath) {
 	}
 
 	const { siteName } = await inquirer.prompt([{
-		type: 'list',
+		type: 'select',
 		name: 'siteName',
 		message: 'Select a website to backup:',
 		choices: dirs,
@@ -218,7 +218,7 @@ export async function backupSite() {
 	const backupsDir = ensureBackupsDir(websitesPath);
 
 	const { method } = await inquirer.prompt([{
-		type: 'list',
+		type: 'select',
 		name: 'method',
 		message: 'Select backup method:',
 		choices: [

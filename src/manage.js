@@ -37,7 +37,7 @@ async function pickSite() {
 
 	const { siteName } = await inquirer.prompt([
 		{
-			type: 'list',
+			type: 'select',
 			name: 'siteName',
 			message: 'Select a website to configure:',
 			choices: dirs,
@@ -213,7 +213,7 @@ async function installThemeFlow(siteName, siteDir, config) {
 
 	const { selectedSlug } = await inquirer.prompt([
 		{
-			type: 'list',
+			type: 'select',
 			name: 'selectedSlug',
 			message: 'Select a theme to install:',
 			choices: themes.map((t) => ({ name: t.name, value: t.slug })),
@@ -381,7 +381,7 @@ export async function manageSite() {
 
 	const { action } = await inquirer.prompt([
 		{
-			type: 'list',
+			type: 'select',
 			name: 'action',
 			message: `What do you want to do with "${siteName}"?`,
 			choices: ACTIONS,

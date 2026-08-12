@@ -145,7 +145,7 @@ async function editThemes(config) {
 		}
 
 		const { action } = await inquirer.prompt([{
-			type: 'list',
+			type: 'select',
 			name: 'action',
 			message: 'Theme list:',
 			choices: THEME_ACTIONS,
@@ -167,7 +167,7 @@ async function editThemes(config) {
 
 		if (action === 'remove' && themes.length > 0) {
 			const { slugToRemove } = await inquirer.prompt([{
-				type: 'list',
+				type: 'select',
 				name: 'slugToRemove',
 				message: 'Select theme to remove:',
 				choices: themes.map((t) => ({ name: `${t.name} (${t.slug})`, value: t.slug })),
@@ -181,7 +181,7 @@ async function editThemes(config) {
 
 		if (action === 'default' && themes.length > 0) {
 			const { defaultSlug } = await inquirer.prompt([{
-				type: 'list',
+				type: 'select',
 				name: 'defaultSlug',
 				message: 'Select default theme:',
 				choices: themes.map((t) => ({ name: t.name, value: t.slug })),
@@ -217,7 +217,7 @@ async function editPlugins(config) {
 		}
 
 		const { action } = await inquirer.prompt([{
-			type: 'list',
+			type: 'select',
 			name: 'action',
 			message: 'Plugin list:',
 			choices: PLUGIN_ACTIONS,
@@ -286,7 +286,7 @@ async function editWpTweaks(config) {
 		}
 
 		const { action } = await inquirer.prompt([{
-			type: 'list',
+			type: 'select',
 			name: 'action',
 			message: 'WordPress tweaks:',
 			choices: TWEAK_ACTIONS,
@@ -296,7 +296,7 @@ async function editWpTweaks(config) {
 
 		if (action === 'add') {
 			const { type } = await inquirer.prompt([{
-				type: 'list',
+				type: 'select',
 				name: 'type',
 				message: 'Tweak type:',
 				choices: Object.entries(TWEAK_TYPE_LABELS).map(([v, n]) => ({ name: n, value: v })),
@@ -325,7 +325,7 @@ async function editWpTweaks(config) {
 			} else if (type === 'language_core') {
 				const { key, value } = await inquirer.prompt([
 					{
-						type: 'list',
+						type: 'select',
 						name: 'key',
 						message: 'Action:',
 						choices: [
@@ -428,7 +428,7 @@ export async function editSettings() {
 
 	while (true) {
 		const { section } = await inquirer.prompt([{
-			type: 'list',
+			type: 'select',
 			name: 'section',
 			message: 'Select a section to edit:',
 			choices: SETTINGS_SECTIONS,

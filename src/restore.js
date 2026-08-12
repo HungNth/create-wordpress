@@ -605,7 +605,7 @@ export async function restoreSite() {
 	}
 
 	const { method } = await inquirer.prompt([{
-		type: 'list',
+		type: 'select',
 		name: 'method',
 		message: 'Select restore method:',
 		choices: [
