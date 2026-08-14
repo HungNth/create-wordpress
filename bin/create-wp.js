@@ -105,7 +105,7 @@ async function promptTheme(config) {
 
 	const { selectedSlug } = await inquirer.prompt([
 		{
-			type: 'list',
+			type: 'select',
 			name: 'selectedSlug',
 			message: `Select a theme to install:`,
 			default: defaultSlug,
